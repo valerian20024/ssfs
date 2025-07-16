@@ -7,4 +7,5 @@ extern const int vdisk_ENOEXIST;
 extern const int vdisk_EEXCEED ;
 extern const int vdisk_ESECTOR ;
 
+extern const int ssfs_EMOUNT;
 #endif
