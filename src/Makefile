@@ -1,3 +1,7 @@
+# +--------------------+
+# | Makefile Variables |
+# +--------------------+
+
 # C Compiler.
 CC := gcc
 
@@ -18,33 +22,38 @@ SRCS := $(shell find $(SRCS_DIR) -name "*.c")
 OBJS_DIR := obj
 OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))  # .file.c => ./obj/file.o
 
-# Create the object directory if it doesn't exist
-$(OBJS_DIR):
-	@mkdir -p $(OBJS_DIR)
-	@mkdir -p $(OBJS_DIR)/vdisk
-	@echo "Created obj/ directory for dumping .o files."
+# +----------------------+
+# | Compilation of files |
+# +----------------------+
 
 # Compile C files to object files.
-$(OBJS_DIR)/%.o: %.c | $(OBJS_DIR)
+$(OBJS_DIR)/%.o: %.c
+	@mkdir -p $(@D)
 	@echo "Compiling $< -> $@"
 	$(CC) $(FLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
+# Linking into final executable.
 $(TARGET): $(OBJS)
 	@echo "Linking $(TARGET)."
 	$(CC) $(OBJS) -o $@
 
-.PHONY: all clean test
+# +--------------+
+# | Main targets |
+# +--------------+
+
+.PHONY: all debug clean
 
 all: $(TARGET)
 
-test:
-	@echo "SRC_DIR : " 	$(SRCS_DIR)
-	@echo "SRCS : " 	$(SRCS)
-	@echo "OBJS_DIR : " 	$(OBJS_DIR)
-	@echo "OBJS :" 		$(OBJS)
-
+# Will recreate directories for object files and print informations.
+debug:
+	@mkdir -p obj/vdisk
+	@echo "SRC_DIR : "	$(SRCS_DIR)
+	@echo "SRCS : "		$(SRCS)
+	@echo "OBJS_DIR : "	$(OBJS_DIR)
+	@echo "OBJS : "		$(OBJS)
 
 clean:
 	@rm -f $(TARGET)
 	@rm -rf $(OBJS_DIR)
-	@echo "Cleaned obj/, target"
+	@echo "Cleaned obj/, target."
