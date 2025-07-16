@@ -2,6 +2,7 @@
 #define SSFS_INTERNAL_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "vdisk.h"
 
 // Structure definitions
@@ -26,11 +27,13 @@ struct inode_block {
 };
 
 extern DISK *global_disk_handle;
+extern bool *allocated_blocks;
 
-extern int my_var;
-
+extern const int VDISK_SECTOR_SIZE;  // from vdisk.c, defaults to 1024
 // Prototypes declaration
 
 int is_mounted();
+int is_inode_positive(int inodes_num);
+int is_inode_valid(int inodes_num, int max_inodes_num);
 
 #endif

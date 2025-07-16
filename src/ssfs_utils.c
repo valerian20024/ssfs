@@ -9,6 +9,14 @@ int is_mounted() {
     return global_disk_handle == NULL ? 0 : 1;
 }
 
+int is_inode_positive(int inode_num) {
+    return inode_num > 0;
+}
+
+int is_inode_valid(int inode_num, int max_inode_num) {
+    return is_inode_positive && inode_num <= max_inode_num;
+}
+
 // This functions 
 int check_magic(DISK *disk) {
 }

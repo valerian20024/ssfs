@@ -5,3 +5,4 @@ const int vdisk_EEXCEED  = -4;
 const int vdisk_ESECTOR  = -5;
 
 const int ssfs_EMOUNT       = -6;
+const int ssfs_ENOSPACE     = -7;

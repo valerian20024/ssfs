@@ -3,12 +3,9 @@
 // if argc and argv not use, replace by "int main(void)" to suppress warnings at compilation
 int main(void) {
 
-    printf("my_var : %d", my_var);
-    create();       // to 8
-    printf("my_var : %d", my_var);
-    unmount();      // to 7
-    printf("my_var : %d", my_var);
+    char* c = 4;
+    int ret = format(c, 8);
 
-
+    printf("ret: %d", ret);
     return 0;
 }
