@@ -22,6 +22,11 @@ SRCS := $(shell find $(SRCS_DIR) -name "*.c")
 OBJS_DIR := obj
 OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))  # .file.c => ./obj/file.o
 
+COLOR_R 	:= "\e[31m"
+COLOR_G 	:= "\e[32m"
+COLOR_B		:= "\e[33m"
+COLOR_END 	:= "\e[0m"
+
 # +----------------------+
 # | Compilation of files |
 # +----------------------+
@@ -29,12 +34,12 @@ OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))  # .file.c => ./obj/
 # Compile C files to object files.
 $(OBJS_DIR)/%.o: %.c
 	@mkdir -p $(@D)
-	@echo "Compiling $< -> $@"
+	@echo $(COLOR_B)"Compiling $< -> $@"$(COLOR_END)
 	$(CC) $(FLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
 # Linking into final executable.
 $(TARGET): $(OBJS)
-	@echo "Linking $(TARGET)."
+	@echo $(COLOR_B)"Linking $(TARGET)."$(COLOR_END)
 	$(CC) $(OBJS) -o $@
 
 # +--------------+
@@ -48,12 +53,12 @@ all: $(TARGET)
 # Will recreate directories for object files and print informations.
 debug:
 	@mkdir -p obj/vdisk
-	@echo "SRC_DIR : "	$(SRCS_DIR)
-	@echo "SRCS : "		$(SRCS)
-	@echo "OBJS_DIR : "	$(OBJS_DIR)
-	@echo "OBJS : "		$(OBJS)
+	@echo $(COLOR_G)"SRC_DIR : "	$(COLOR_END)	$(SRCS_DIR)
+	@echo $(COLOR_G)"SRCS : "		$(COLOR_END)	$(SRCS)
+	@echo $(COLOR_G)"OBJS_DIR : "	$(COLOR_END)	$(OBJS_DIR)
+	@echo $(COLOR_G)"OBJS : "		$(COLOR_END)	$(OBJS)
 
 clean:
 	@rm -f $(TARGET)
 	@rm -rf $(OBJS_DIR)
-	@echo "Cleaned obj/, target."
+	@echo $(COLOR_R)"Cleaned obj/, target."$(COLOR_END)

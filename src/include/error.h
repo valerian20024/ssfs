@@ -9,4 +9,5 @@ extern const int vdisk_ESECTOR ;
 
 extern const int ssfs_EMOUNT;
 extern const int ssfs_ENOSPACE;
+extern const int ssfs_ESBINIT;
 #endif

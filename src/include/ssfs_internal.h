@@ -5,7 +5,9 @@
 #include <stdbool.h>
 #include "vdisk.h"
 
-// Structure definitions
+// #########################
+// # Structure definitions #
+// #########################
 
 struct superblock {
     uint8_t magic[16];
@@ -26,11 +28,24 @@ struct inode_block {
     struct inode inodes[32];
 };
 
+// ####################
+// # Global variables #
+// ####################
+
 extern DISK *global_disk_handle;
 extern bool *allocated_blocks;
 
+// #############
+// # Constants #
+// #############
+
 extern const int VDISK_SECTOR_SIZE;  // from vdisk.c, defaults to 1024
-// Prototypes declaration
+extern const int SUPERBLOCK_SECTOR;
+extern const unsigned char MAGIC_NUMBER[];
+
+// ##########################
+// # Prototypes declaration #
+// ##########################
 
 int is_mounted();
 int is_inode_positive(int inodes_num);

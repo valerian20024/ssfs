@@ -1,5 +1,6 @@
 //! this file does blablabla
 #include <stdint.h>
+#include <string.h>
 
 #include "fs.h"
 #include "ssfs_internal.h"
@@ -37,7 +38,18 @@ int format(char *disk_name, int inodes) {
         }
     }
 
-    // Install SB
+    // Initialize and fill the superblock
+    struct superblock sb;
+    memset(&sb, 0, sizeof(sb));
+    memcpy(sb.magic, MAGIC_NUMBER, 16);
+    sb.num_blocks       = disk.size_in_sectors;
+    sb.num_inode_blocks = inode_blocks;
+    sb.block_size       = VDISK_SECTOR_SIZE;
+    memcpy(buffer, &sb, sizeof(struct superblock));
+    if (vdisk_write(&disk, SUPERBLOCK_SECTOR, buffer) != 0) {
+        vdisk_off(&disk);
+        return ssfs_ESBINIT;
+    }
 }
 
 int mount(char *disk_name) {}
