@@ -87,7 +87,7 @@ int format(char *disk_name, int inodes) {
 cleanup:
     vdisk_off(&disk);
     if (ret != 0) 
-        fprintf(stderr, "There is an error (code %d).\n", ret);
+        fprintf(stderr, "Error when formatting (code %d).\n", ret);
     return ret;
 }
 
@@ -111,7 +111,16 @@ int mount(char *disk_name) {
         goto cleanup;
     }
 
+    // Reading superblock
+    ret = vdisk_read(&disk, SUPERBLOCK_SECTOR, buffer);
+    if (ret != 0)
+        goto cleanup;
+    struct superblock *sb = (struct superblock *)buffer;
+
+    
+
 cleanup:
+    vdisk_off(&disk);
     if (ret != 0)
         fprintf(stderr, "Error when mounting (code %d).\n", ret);
     return ret;

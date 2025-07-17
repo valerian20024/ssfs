@@ -7,3 +7,4 @@ const int vdisk_ESECTOR  = -5;
 const int ssfs_EMOUNT       = -6;
 const int ssfs_ENOSPACE     = -7;
 const int ssfs_ESBINIT      = -8;
+const int ssfs_EMAGIC       = -9;
