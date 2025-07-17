@@ -131,7 +131,7 @@ int mount(char *disk_name) {
     }
     *global_disk_handle = disk;
 
-    // TODO : do the bitmap thing line 162 in fs.c
+    allocated_blocks = (bool *)calloc(sb->num_blocks, sizeof(bool));
 
 cleanup:
     vdisk_off(&disk);
