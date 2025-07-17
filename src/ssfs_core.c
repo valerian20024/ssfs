@@ -31,9 +31,10 @@ int format(char *disk_name, int inodes) {
     if (!is_inode_positive(inodes))
         inodes = 1;
 
-    // Variable used to return error codes after cleanup
+    // Variable used to return error codes after cleanup.
     int ret;
-    // Initializing the buffer before any goto statement.
+    // Buffer used to copy disk sectors from the disk image.
+    // * MUST be initialized before any goto statement.
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
     // Turning on the virtual disk
@@ -76,6 +77,8 @@ int format(char *disk_name, int inodes) {
     ret = vdisk_sync(&disk);
 cleanup:
     vdisk_off(&disk);
+    if (ret != 0) 
+        fprintf(stderr, "There is an error (code %d).\n", ret);
     return ret;
 }
 
