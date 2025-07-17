@@ -1,11 +1,11 @@
 #include "ssfs_internal.h"
+#include "fs.h"
 
 // if argc and argv not use, replace by "int main(void)" to suppress warnings at compilation
 int main(void) {
 
-    char* c = 4;
+    char* c = "testdisk.img";
     int ret = format(c, 8);
 
-    printf("ret: %d", ret);
-    return 0;
+    return ret;
 }

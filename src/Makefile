@@ -22,6 +22,7 @@ SRCS := $(shell find $(SRCS_DIR) -name "*.c")
 OBJS_DIR := obj
 OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))  # .file.c => ./obj/file.o
 
+# Defining ANSI colors for clearer output
 COLOR_R 	:= "\e[31m"
 COLOR_G 	:= "\e[32m"
 COLOR_B		:= "\e[33m"
