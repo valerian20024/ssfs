@@ -9,3 +9,4 @@ const int ssfs_ENOSPACE     = -7;
 const int ssfs_ESBINIT      = -8;
 const int ssfs_EMAGIC       = -9;
 const int ssfs_EDISKPTR     = -10;
+const int ssfs_EALLOC       = -11;

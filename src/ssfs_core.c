@@ -114,29 +114,53 @@ int mount(char *disk_name) {
     // Reading superblock
     ret = vdisk_read(&disk, SUPERBLOCK_SECTOR, buffer);
     if (ret != 0)
-        goto cleanup;
+        goto cleanup_disk;
     struct superblock *sb = (struct superblock *)buffer;
 
     // Check magic number
     if (!is_magic_ok(sb->magic)) {
         ret = ssfs_EMAGIC;
-        goto cleanup;
+        goto cleanup_disk;
     }
 
     // Allocate the global disk pointer
     global_disk_handle = malloc(sizeof(DISK));
     if (global_disk_handle == NULL) {
         ret = ssfs_EDISKPTR;
-        goto cleanup;
+        goto cleanup_disk;
     }
     *global_disk_handle = disk;
 
+    // Allocating the block allocation bitmap
     allocated_blocks = (bool *)calloc(sb->num_blocks, sizeof(bool));
+    if (allocated_blocks == NULL) {
+        ret = ssfs_EALLOC;
+        goto cleanup_global_disk_handle;
+    }
+
+    
+
+
+
+    // If everything went right, simply return.
+    goto cleanup;
+
+    // Else, we incrementaly free ressources.
+cleanup_allocated_blocks:
+    free(allocated_blocks);
+    allocated_blocks = NULL;
+
+cleanup_global_disk_handle:
+    free(global_disk_handle);
+    global_disk_handle = NULL;
+
+cleanup_disk:
+    vdisk_off(global_disk_handle);
 
 cleanup:
-    vdisk_off(&disk);
-    if (ret != 0)
+    if (ret != 0) {
         fprintf(stderr, "Error when mounting (code %d).\n", ret);
+    }
     return ret;
 }
 
