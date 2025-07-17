@@ -122,7 +122,16 @@ int mount(char *disk_name) {
         ret = ssfs_EMAGIC;
         goto cleanup;
     }
-    
+
+    // Allocate the global disk pointer
+    global_disk_handle = malloc(sizeof(DISK));
+    if (global_disk_handle == NULL) {
+        ret = ssfs_EDISKPTR;
+        goto cleanup;
+    }
+    *global_disk_handle = disk;
+
+    // TODO : do the bitmap thing line 162 in fs.c
 
 cleanup:
     vdisk_off(&disk);

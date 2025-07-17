@@ -11,4 +11,5 @@ extern const int ssfs_EMOUNT;
 extern const int ssfs_ENOSPACE;
 extern const int ssfs_ESBINIT;
 extern const int ssfs_EMAGIC;
+extern const int ssfs_EDISKPTR;
 #endif
