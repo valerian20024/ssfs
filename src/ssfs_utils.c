@@ -7,6 +7,7 @@
 // the magic number is good.
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "vdisk.h"
@@ -14,7 +15,7 @@
 
 
 const int SUPERBLOCK_SECTOR = 0;
-const unsigned char MAGIC_NUMBER[16] = {
+const uint8_t MAGIC_NUMBER[16] = {
     0xf0, 0x55, 0x4c, 0x49,
     0x45, 0x47, 0x45, 0x49,
     0x4e, 0x46, 0x4f, 0x30,
@@ -41,7 +42,7 @@ int is_inode_valid(int inode_num, int max_inode_num) {
 }
 
 // This function returns 0 if the magic numbers don't correspond. Return 1 if they correspond.
-int is_magic_ok(char *number) {
+int is_magic_ok(uint8_t *number) {
     int ret = memcmp(number, MAGIC_NUMBER, sizeof(MAGIC_NUMBER));
     return ret == 0 ? 1 : 0;
 }

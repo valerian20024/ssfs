@@ -50,6 +50,6 @@ extern const unsigned char MAGIC_NUMBER[];
 int is_mounted();
 int is_inode_positive(int inodes_num);
 int is_inode_valid(int inodes_num, int max_inodes_num);
-int is_magic_ok(char * number);
+int is_magic_ok(uint8_t * number);
 
 #endif

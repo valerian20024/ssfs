@@ -117,6 +117,11 @@ int mount(char *disk_name) {
         goto cleanup;
     struct superblock *sb = (struct superblock *)buffer;
 
+    // Check magic number
+    if (!is_magic_ok(sb->magic)) {
+        ret = ssfs_EMAGIC;
+        goto cleanup;
+    }
     
 
 cleanup:
