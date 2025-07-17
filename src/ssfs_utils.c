@@ -1,8 +1,11 @@
 //! this file aims at defining helpers functions used in several
 //! places in the code.
 
+#include <stdbool.h>
+
 #include "vdisk.h"
 #include "ssfs_internal.h"
+
 
 const int SUPERBLOCK_SECTOR = 0;
 const unsigned char MAGIC_NUMBER[16] = {
@@ -11,6 +14,9 @@ const unsigned char MAGIC_NUMBER[16] = {
     0x4e, 0x46, 0x4f, 0x30,
     0x39, 0x34, 0x30, 0x0f 
 };
+
+bool *allocated_blocks;
+
 
 // This function returns 0 is the disk is not mounted and 1 otherwise.
 int is_mounted() {

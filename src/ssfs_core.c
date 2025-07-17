@@ -1,6 +1,18 @@
-//! this file does blablabla
+/*
+!This file does blabla
+
+
+Functions often use a `ret` variable and goto statements to handle error codes
+gracefully. In such a case, one need to declare any "variable" size object 
+before any goto statement, otherwise compiler will complain. This is the case
+for `buffer` which appears often in functions.
+
+*/
+
+
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "fs.h"
 #include "ssfs_internal.h"
@@ -25,17 +37,14 @@ DISK* global_disk_handle = NULL;
  * will be erased. The function assumes the disk is not currently mounted.
  */
 int format(char *disk_name, int inodes) {
+    int ret = 0;
+    uint8_t buffer[VDISK_SECTOR_SIZE];
+
     if (is_mounted())
         return ssfs_EMOUNT;
 
     if (!is_inode_positive(inodes))
         inodes = 1;
-
-    // Variable used to return error codes after cleanup.
-    int ret;
-    // Buffer used to copy disk sectors from the disk image.
-    // * MUST be initialized before any goto statement.
-    uint8_t buffer[VDISK_SECTOR_SIZE];
 
     // Turning on the virtual disk
     DISK disk;
@@ -86,19 +95,47 @@ cleanup:
  * 
  */
 int mount(char *disk_name) {
-    if (is_mounted())
-        return ssfs_EMOUNT;
+    int ret = 0;
+    uint8_t buffer[VDISK_SECTOR_SIZE];
+
+    if (is_mounted()) {
+        ret = ssfs_EMOUNT;
+        goto cleanup;
+    }
     
     // Turning on the virtual disk
     DISK disk;
-    if (vdisk_on(disk_name, &disk) != 0)
-        return vdisk_EACCESS;
+    ret = vdisk_on(disk_name, &disk);
+    if (ret != 0) {
+        ret = vdisk_EACCESS;
+        goto cleanup;
+    }
 
+cleanup:
+    if (ret != 0)
+        fprintf(stderr, "Error when mounting (code %d).\n", ret);
+    return ret;
 }
 
 /**
  * 
  */
 int unmount() {
+    int ret = 0;
 
+    if (!is_mounted()) {
+        ret = ssfs_EMOUNT;
+        goto cleanup;
+    }
+
+    vdisk_off(global_disk_handle);
+    free(global_disk_handle);
+    global_disk_handle = NULL;
+    free(allocated_blocks);
+    allocated_blocks = NULL;
+
+cleanup:
+    if (ret != 0)
+        fprintf(stderr, "Error when unmounting (code %d).\n", ret);
+    return ret;
 }

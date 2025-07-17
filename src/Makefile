@@ -36,12 +36,12 @@ COLOR_END 	:= "\e[0m"
 $(OBJS_DIR)/%.o: %.c
 	@mkdir -p $(@D)
 	@echo $(COLOR_B)"Compiling $< -> $@"$(COLOR_END)
-	$(CC) $(FLAGS) -I$(INCLUDE_DIR) -c $< -o $@
+	@$(CC) $(FLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
 # Linking into final executable.
 $(TARGET): $(OBJS)
 	@echo $(COLOR_B)"Linking $(TARGET)."$(COLOR_END)
-	$(CC) $(OBJS) -o $@
+	@$(CC) $(OBJS) -o $@
 
 # +--------------+
 # | Main targets |
@@ -58,6 +58,10 @@ debug:
 	@echo $(COLOR_G)"SRCS : "		$(COLOR_END)	$(SRCS)
 	@echo $(COLOR_G)"OBJS_DIR : "	$(COLOR_END)	$(OBJS_DIR)
 	@echo $(COLOR_G)"OBJS : "		$(COLOR_END)	$(OBJS)
+	@echo $(COLOR_B)"Compiled using :" $(COLOR_END)
+	@echo $(CC) $(FLAGS) -I$(INCLUDE_DIR) -c -o
+	@echo $(COLOR_B)"Linked using :" $(COLOR_END)
+	@echo $(CC) $(OBJS) -o
 
 clean:
 	@rm -f $(TARGET)
