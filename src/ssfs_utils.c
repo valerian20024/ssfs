@@ -48,8 +48,8 @@ int is_magic_ok(uint8_t *number) {
 }
 
 int allocate_block(bool* bitmap, uint32_t block) {
-    if (block < 0)
-        return ssfs_EALLOC;
+    //if (block < 0)
+    //    return ssfs_EALLOC;
     bitmap[block] = true;
     return 0;
 }

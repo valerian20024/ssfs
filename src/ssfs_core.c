@@ -222,15 +222,15 @@ int _initialize_allocated_blocks(bool* bitmap) {
     for (uint32_t block = 1; block < sb->num_inode_blocks; block++) {
         ret = vdisk_read(global_disk_handle, block, buffer);
         // !manage error
-        struct inodes_block *ib = (struct inodes_block *)buffer;
+        inodes_block_t *ib = (inodes_block_t *)buffer;
         
         for (int i = 0; i < 32; i++) {
-            if (!ib[i].valid)
+            if (!ib[i]->valid)
                 continue;
 
             for (int d = 0; d < 4; d++) {
-                if (ib->i.direct[d])
-                    allocate_block(bitmap, ib[i].direct[d]);
+                if (ib[i]->direct[d])
+                    allocate_block(bitmap, ib[i]->direct[d]);
             }
             
         }

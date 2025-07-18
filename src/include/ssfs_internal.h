@@ -16,6 +16,8 @@ struct superblock {
     uint32_t block_size;
 } __attribute__((packed));
 
+typedef struct superblock superblock_t;
+
 struct inode {
     uint32_t valid;      // 0 for unused, 1 for used
     uint32_t size;       // File size in bytes
@@ -24,9 +26,14 @@ struct inode {
     uint32_t indirect2;  // Second indirect "pointer"
 } __attribute__((packed));
 
-struct inode_block {
-    struct inode inodes[32];
-};
+typedef struct inode inode_t;
+
+/*
+typedef struct {
+    inode_t inodes[32];
+} inodes_block_t;*/
+
+typedef inode_t inodes_block_t[32];
 
 // ####################
 // # Global variables #
