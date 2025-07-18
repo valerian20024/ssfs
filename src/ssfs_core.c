@@ -200,6 +200,7 @@ int _initialize_allocated_blocks() {
         return ret;
     superblock_t *sb = (superblock_t *)buffer;
 
+    fprintf(stdout, "System blocks :\n");
     // Compute the number of system blocks and mark them.
     int system_blocks = 1 + sb->num_inode_blocks;
     for (int block_num = 0; block_num < system_blocks; block_num++) {
@@ -219,7 +220,7 @@ int _initialize_allocated_blocks() {
         // For each inode in an inode block, if inode has been allocated
         for (int i = 0; i < 32; i++) {
             fprintf(stdout, "inode i is %d\n", i);
-            if (ib[i]->valid) {
+            if (ib[0][i].valid) {
                 fprintf(stdout, "inode %d is valid\n", i);
                 fprintf(stdout, "Entering Allocating direct blocks\n");
                 // Allocate direct blocks
@@ -232,10 +233,10 @@ int _initialize_allocated_blocks() {
                 }
 
                 fprintf(stdout, "Entering allocating indirect block\n" );
-                if (ib[i]->indirect1)
+                if (ib[0][i].indirect1)
                     _allocate_indirect_block(ib[i]->indirect1);
 
-                if (ib[i]->indirect2)
+                if (ib[0][i].indirect2)
                     _allocate_double_indirect_block(ib[i]->indirect2);
             }
         }
