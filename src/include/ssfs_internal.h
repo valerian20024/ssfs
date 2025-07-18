@@ -34,8 +34,8 @@ typedef inode_t inodes_block_t[32];
 // # Global variables #
 // ####################
 
-extern DISK *global_disk_handle;
-extern bool *allocated_blocks;
+extern DISK *disk_handle;
+extern bool *allocated_blocks_handle;
 
 // #############
 // # Constants #

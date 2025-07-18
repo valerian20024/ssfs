@@ -18,8 +18,8 @@ for `buffer` which appears often in functions.
 #include "ssfs_internal.h"
 #include "error.h"
 
-DISK* global_disk_handle = NULL;
-bool* allocated_blocks = NULL;
+DISK* disk_handle = NULL;
+bool* allocated_blocks_handle = NULL;
 
 /**
  * @brief Formats a disk with the Simple and Secure File System (SSFS).
@@ -98,6 +98,8 @@ cleanup:
 int mount(char *disk_name) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
+    DISK disk;
+    bool *allocated_blocks;
 
     if (is_mounted()) {
         ret = ssfs_EMOUNT;
@@ -105,7 +107,6 @@ int mount(char *disk_name) {
     }
     
     // Turning on the virtual disk
-    DISK disk;
     ret = vdisk_on(disk_name, &disk);
     if (ret != 0) {
         ret = vdisk_EACCESS;
@@ -125,51 +126,40 @@ int mount(char *disk_name) {
     }
 
     // Allocate the global disk pointer
-    global_disk_handle = malloc(sizeof(DISK));
-    if (global_disk_handle == NULL) {
+    disk_handle = malloc(sizeof(DISK));
+    if (disk_handle == NULL) {
         ret = ssfs_EDISKPTR;
         goto cleanup_disk;
     }
-    *global_disk_handle = disk;
+    *disk_handle = disk;
 
     // Allocating the block allocation bitmap
     allocated_blocks = (bool *)calloc(sb->num_blocks, sizeof(bool));
     if (allocated_blocks == NULL) {
         ret = ssfs_EALLOC;
-        goto cleanup_global_disk_handle;
+        goto cleanup_disk_handle;
     }
-    // todo use the global var !
+    *allocated_blocks_handle = allocated_blocks; 
 
 
-    ret = _initialize_allocated_blocks(allocated_blocks);
+    ret = _initialize_allocated_blocks(allocated_blocks_handle);
     if (ret != 0)
-        goto cleanup_allocated_blocks;
-    // that function is defined in this file, will use shared functions defined
-    // in utils. 
-    // Just give it ptr to bitmap and disk, it will firstt
-    // mark the sb and the inodes blocks as used, then recursively
-    // checks all the inodes's data and shit to know what DB is used.
-    // Only output a single error : ssfs_EMARKING or idk
-    // goto cleanup_allocated_blocks if failure
-    // Look at how it's done in fs.c to redo the utils functions.
-
-
-
-
+        goto cleanup_allocated_blocks_handle;
+    
     // If everything went right, simply return.
     goto cleanup;
 
     // Else, we incrementaly free ressources.
-cleanup_allocated_blocks:
-    free(allocated_blocks);
-    allocated_blocks = NULL;
+cleanup_allocated_blocks_handle:
+    free(allocated_blocks_handle);
+    allocated_blocks_handle = NULL;
 
-cleanup_global_disk_handle:
-    free(global_disk_handle);
-    global_disk_handle = NULL;
+cleanup_disk_handle:
+    free(disk_handle);
+    disk_handle = NULL;
 
 cleanup_disk:
-    vdisk_off(global_disk_handle);
+    vdisk_off(disk_handle);
 
 cleanup:
     if (ret != 0) {
@@ -189,11 +179,11 @@ int unmount() {
         goto cleanup;
     }
 
-    vdisk_off(global_disk_handle);
-    free(global_disk_handle);
-    global_disk_handle = NULL;
-    free(allocated_blocks);
-    allocated_blocks = NULL;
+    vdisk_off(disk_handle);
+    free(disk_handle);
+    disk_handle = NULL;
+    free(allocated_blocks_handle);
+    allocated_blocks_handle = NULL;
 
 cleanup:
     if (ret != 0)
@@ -207,7 +197,7 @@ int _initialize_allocated_blocks() {
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
     // Read the superblock
-    ret = vdisk_read(global_disk_handle, SUPERBLOCK_SECTOR, buffer);
+    ret = vdisk_read(disk_handle, SUPERBLOCK_SECTOR, buffer);
     if (ret != 0) 
         return ret;
     struct superblock *sb = (struct superblock *)buffer;
@@ -220,7 +210,7 @@ int _initialize_allocated_blocks() {
 
     // Foreach inode block in the filesystem
     for (uint32_t block = 1; block < sb->num_inode_blocks; block++) {
-        ret = vdisk_read(global_disk_handle, block, buffer);
+        ret = vdisk_read(disk_handle, block, buffer);
         //! manage error must deallocate the direct blocks!
         inodes_block_t *ib = (inodes_block_t *)buffer;
         
@@ -253,7 +243,7 @@ int _allocate_indirect_block(uint32_t indirect_block) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
-    ret = vdisk_read(global_disk_handle, indirect_block, buffer);
+    ret = vdisk_read(disk_handle, indirect_block, buffer);
     if (ret != 0)
         goto cleanup;
 
@@ -276,7 +266,7 @@ int _allocate_double_indirect_block(uint32_t double_indirect_block) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];  // storing 2-indirect block
 
-    ret = vdisk_read(global_disk_handle, double_indirect_block, buffer);
+    ret = vdisk_read(disk_handle, double_indirect_block, buffer);
     if (ret != 0)
         goto cleanup;
 

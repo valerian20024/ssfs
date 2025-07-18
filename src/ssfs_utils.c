@@ -22,12 +22,9 @@ const uint8_t MAGIC_NUMBER[16] = {
     0x39, 0x34, 0x30, 0x0f 
 };
 
-//bool *allocated_blocks = NULL;
-
-
 // This function returns 0 is the disk is not mounted and 1 otherwise.
 int is_mounted() {
-    return global_disk_handle == NULL ? 0 : 1;
+    return disk_handle == NULL ? 0 : 1;
 }
 
 // This function returns 0 is the inode is negative or zero, 1 if it's strictly positive.
@@ -48,8 +45,8 @@ int is_magic_ok(uint8_t *number) {
 }
 
 int allocate_block(uint32_t block) {
-    if (allocated_blocks == NULL) 
+    if (allocated_blocks_handle == NULL) 
         return ssfs_EALLOC;
-    allocated_blocks[block] = true;
+    allocated_blocks_handle[block] = true;
     return 0;
 }
