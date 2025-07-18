@@ -23,7 +23,6 @@ int create() {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
-
     if (!is_mounted())
         return ssfs_EMOUNT;
     
@@ -36,7 +35,7 @@ int create() {
     
     // Look for a free inode. Starting at index 1.
     // Foreach inode_block in the filesystem
-    for (uint32_t ib = 1; ib < sb->num_inode_blocks; ib++) {
+    for (uint32_t ib = 1; ib < 1 + sb->num_inode_blocks; ib++) {
         ret = vdisk_read(disk_handle, ib, buffer);
         if (ret != 0) {
             ret = vdisk_EACCESS;

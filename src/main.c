@@ -6,9 +6,15 @@
 int main(void) {
 
     char *disk_name = "testdisk.img";
-    format(disk_name, 18);
+    format(disk_name, 40);
 
     mount(disk_name);
-
+    /*
+    for (int f = 0; f < 10; f++) {
+        int file = create();
+        printf("created file with inode %d\n", file);
+    }*/
+        
+    
     unmount();
 }

@@ -79,7 +79,7 @@ int format(char *disk_name, int inodes) {
     sb.num_inode_blocks = inode_blocks;
     sb.block_size       = VDISK_SECTOR_SIZE;
     memcpy(buffer, &sb, sizeof(superblock_t));
-    ret = vdisk_write(&disk, SUPERBLOCK_SECTOR, buffer);
+    ret = vdisk_write(&disk, 0, buffer);
     if (ret != 0)
         goto cleanup;
 
@@ -96,6 +96,7 @@ cleanup:
  * 
  */
 int mount(char *disk_name) {
+    fprintf(stdout, "mount\n");
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -119,7 +120,7 @@ int mount(char *disk_name) {
     }
 
     // Reading superblock
-    ret = vdisk_read(disk_handle, SUPERBLOCK_SECTOR, buffer);
+    ret = vdisk_read(disk_handle, 0, buffer);
     if (ret != 0)
         goto cleanup_shut_down_disk;
     superblock_t *sb = (superblock_t *)buffer;
@@ -137,7 +138,7 @@ int mount(char *disk_name) {
         goto cleanup_shut_down_disk;
     }
 
-    ret = _initialize_allocated_blocks(allocated_blocks_handle);
+    ret = _initialize_allocated_blocks();
     if (ret != 0)
         goto cleanup_deallocated_blocks_handle;
     
@@ -188,43 +189,55 @@ cleanup:
 
 
 int _initialize_allocated_blocks() {
+    fprintf(stdout, "_initialize_allocated_blocks\n");
+
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
     // Read the superblock
-    ret = vdisk_read(disk_handle, SUPERBLOCK_SECTOR, buffer);
+    ret = vdisk_read(disk_handle, 0, buffer);
     if (ret != 0) 
         return ret;
     superblock_t *sb = (superblock_t *)buffer;
 
     // Compute the number of system blocks and mark them.
     int system_blocks = 1 + sb->num_inode_blocks;
-    for (int block = 0; block < system_blocks; block++) {
-        allocate_block(block);
+    for (int block_num = 0; block_num < system_blocks; block_num++) {
+        allocate_block(block_num);
     }
 
+    fprintf(stdout, "Entering For each inode block in the filesystem\n");
+
     // Foreach inode block in the filesystem
-    for (uint32_t block = 1; block < sb->num_inode_blocks; block++) {
-        ret = vdisk_read(disk_handle, block, buffer);
+    for (uint32_t block_num = 1; block_num < 1 + sb->num_inode_blocks; block_num++) {
+        fprintf(stdout, "block_num is %d\n", block_num);
+        ret = vdisk_read(disk_handle, block_num, buffer);
         //! manage error must deallocate the direct blocks!
         inodes_block_t *ib = (inodes_block_t *)buffer;
         
-        // For each inode in an inode block
+        fprintf(stdout, "Entering For each inode in the block\n");
+        // For each inode in an inode block, if inode has been allocated
         for (int i = 0; i < 32; i++) {
-            if (!ib[i]->valid)
-                continue;
+            fprintf(stdout, "inode i is %d\n", i);
+            if (ib[i]->valid) {
+                fprintf(stdout, "inode %d is valid\n", i);
+                fprintf(stdout, "Entering Allocating direct blocks\n");
+                // Allocate direct blocks
+                for (int d = 0; d < 4; d++) {
+                    fprintf(stdout, "d is %d\n", d);
+                    if (ib[i]->direct[d]) {
+                        fprintf(stdout, "ib[i]->direct[d] is true\n");
+                        allocate_block(ib[i]->direct[d]);
+                    }
+                }
 
-            // Allocate direct blocks
-            for (int d = 0; d < 4; d++) {
-                if (ib[i]->direct[d])
-                    allocate_block(ib[i]->direct[d]);
+                fprintf(stdout, "Entering allocating indirect block\n" );
+                if (ib[i]->indirect1)
+                    _allocate_indirect_block(ib[i]->indirect1);
+
+                if (ib[i]->indirect2)
+                    _allocate_double_indirect_block(ib[i]->indirect2);
             }
-
-            if (ib[i]->indirect1)
-                _allocate_indirect_block(ib[i]->indirect1);
-
-            if (ib[i]->indirect2)
-                _allocate_double_indirect_block(ib[i]->indirect2);            
         }
     }
 

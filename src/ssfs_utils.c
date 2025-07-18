@@ -14,7 +14,6 @@
 #include "ssfs_internal.h"
 #include "error.h"
 
-const int SUPERBLOCK_SECTOR = 0;
 const uint8_t MAGIC_NUMBER[16] = {
     0xf0, 0x55, 0x4c, 0x49,
     0x45, 0x47, 0x45, 0x49,
@@ -45,6 +44,7 @@ int is_magic_ok(uint8_t *number) {
 }
 
 int allocate_block(uint32_t block) {
+    fprintf(stdout, "allocate_block %d\n", block);
     if (allocated_blocks_handle == NULL) 
         return ssfs_EALLOC;
     allocated_blocks_handle[block] = true;
