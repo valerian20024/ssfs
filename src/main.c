@@ -6,7 +6,7 @@
 int main(void) {
 
     char *disk_name = "testdisk.img";
-    format(disk_name, 90);
+    format(disk_name, 1);
 
     mount(disk_name);
 
