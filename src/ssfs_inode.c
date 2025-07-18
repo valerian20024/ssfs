@@ -7,15 +7,50 @@
 #include "error.h"
 
 
-/*int stat(int inode_num) {
+int stat(int inode_num) {
     int ret = 0;
+    uint8_t buffer[VDISK_SECTOR_SIZE];
     
     if (!is_mounted())
         return ssfs_EMOUNT;
     
+    ret = vdisk_read(disk_handle, 0, buffer);
+        if (ret != 0) {
+        ret = vdisk_EACCESS;
+        goto cleanup;
+    }
+    superblock_t *sb = (superblock_t *)buffer;
+    
+    uint32_t total_inodes = sb->num_inode_blocks * 32;
+    if (!is_inode_valid(inode_num, total_inodes)) {
+        ret = ssfs_EALLOC;
+        goto cleanup;
+    }
+
+    // Determining which precise inode we are looking for
+    uint32_t target_inode_block = inode_num / 32;
+    uint32_t target_inode_num   = inode_num % 32;
+
+    // Reading the sector where the inode is (skip the superblock)
+    ret = vdisk_read(disk_handle, 1 + target_inode_block, buffer);
+    if (ret != 0) {
+        ret = vdisk_EACCESS;
+        goto cleanup;
+    }
+
+    inodes_block_t *ib = (inodes_block_t *)buffer;
+    inode_t *target_inode = &(*ib)[target_inode_num];
+
+    if (target_inode->valid == 0) {
+        ret = ssfs_EINODE;
+        goto cleanup;
+    }
+
+    return (int)target_inode->size;
+    
 cleanup:
     return ret;
-}*/
+}
 
 // Creates a file and, on success, returns the i-node number that identifies the
 // file

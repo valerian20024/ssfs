@@ -226,18 +226,18 @@ int _initialize_allocated_blocks() {
                 // Allocate direct blocks
                 for (int d = 0; d < 4; d++) {
                     fprintf(stdout, "d is %d\n", d);
-                    if (ib[i]->direct[d]) {
-                        fprintf(stdout, "ib[i]->direct[d] is true\n");
-                        allocate_block(ib[i]->direct[d]);
+                    if (ib[0][i].direct[d]) {
+                        fprintf(stdout, "ib[0][i].direct[d] is true\n");
+                        allocate_block(ib[0][i].direct[d]);
                     }
                 }
 
                 fprintf(stdout, "Entering allocating indirect block\n" );
                 if (ib[0][i].indirect1)
-                    _allocate_indirect_block(ib[i]->indirect1);
+                    _allocate_indirect_block(ib[0][i].indirect1);
 
                 if (ib[0][i].indirect2)
-                    _allocate_double_indirect_block(ib[i]->indirect2);
+                    _allocate_double_indirect_block(ib[0][i].indirect2);
             }
         }
     }

@@ -5,8 +5,8 @@
 // if argc and argv not use, replace by "int main(void)" to suppress warnings at compilation
 int main(void) {
 
-    char *disk_name = "testdisk.img";
-    format(disk_name, 20);
+    char *disk_name = "disk_img.2";
+    //format(disk_name, 100);
 
     mount(disk_name);
     
@@ -14,6 +14,11 @@ int main(void) {
         int file = create();
         printf("created file with inode %d\n", file);
     }
-    
+
+    for (int f = 0; f < 4; f++) {
+        int ret = stat(f);
+        printf("stat: %d\n", ret);
+    }
+        
     unmount();
 }
