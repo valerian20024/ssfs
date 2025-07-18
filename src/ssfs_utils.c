@@ -12,7 +12,7 @@
 
 #include "vdisk.h"
 #include "ssfs_internal.h"
-
+#include "error.h"
 
 const int SUPERBLOCK_SECTOR = 0;
 const uint8_t MAGIC_NUMBER[16] = {
@@ -45,4 +45,11 @@ int is_inode_valid(int inode_num, int max_inode_num) {
 int is_magic_ok(uint8_t *number) {
     int ret = memcmp(number, MAGIC_NUMBER, sizeof(MAGIC_NUMBER));
     return ret == 0 ? 1 : 0;
+}
+
+int allocated_block(bool* bitmap, int block) {
+    if (block < 0)
+        return ssfs_EALLOC;
+    bitmap[block] = true;
+    return 0;
 }

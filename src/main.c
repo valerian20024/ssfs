@@ -1,24 +1,22 @@
 #include "ssfs_internal.h"
 #include "fs.h"
+#include <stdbool.h>
 
 // if argc and argv not use, replace by "int main(void)" to suppress warnings at compilation
 int main(void) {
 
-    uint8_t good[16] = {
-    0xf0, 0x55, 0x4c, 0x49,
-    0x45, 0x47, 0x45, 0x49,
-    0x4e, 0x46, 0x4f, 0x30,
-    0x39, 0x34, 0x30, 0x0f 
-    };
-    uint8_t wrong[16] = {
-    0xf0, 0x55, 0x4c, 0x49,
-    0x45, 0x47, 0x45, 0x47,
-    0x4e, 0x46, 0x4f, 0x30,
-    0x39, 0x34, 0x30, 0x0f 
+    bool bitmap[11] = {
+        false, false, false, false,
+        false, false, false, false,
+        false, false, false
     };
 
-    int r1 = is_magic_ok(good);
-    int r2 = is_magic_ok(wrong);
+    allocated_block(bitmap, 0);
+    allocated_block(bitmap, 4);
+    allocated_block(bitmap, 10);
 
-    printf("r1 = %d, r2 = %d\n", r1, r2);
+    for (int i = 0; i < 11; i++) {
+        printf("%d, ", bitmap[i]);
+    }
+
 }

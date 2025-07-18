@@ -51,5 +51,7 @@ int is_mounted();
 int is_inode_positive(int inodes_num);
 int is_inode_valid(int inodes_num, int max_inodes_num);
 int is_magic_ok(uint8_t * number);
+int allocated_block(bool* bitmap, int block);
+//int _mark_allocated_blocks();
 
 #endif

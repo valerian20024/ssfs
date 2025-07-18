@@ -138,7 +138,18 @@ int mount(char *disk_name) {
         goto cleanup_global_disk_handle;
     }
 
-    
+
+    // todo :
+    // ret = _mark_allocated_blocks 
+    // that function is defined in this file, will use shared functions defined
+    // in utils. 
+    // Just give it ptr to bitmap and disk, it will firstt
+    // mark the sb and the inodes blocks as used, then recursively
+    // checks all the inodes's data and shit to know what DB is used.
+    // Only output a single error : ssfs_EMARKING or idk
+    // goto cleanup_allocated_blocks if failure
+    // Look at how it's done in fs.c to redo the utils functions.
+
 
 
 
@@ -185,4 +196,9 @@ cleanup:
     if (ret != 0)
         fprintf(stderr, "Error when unmounting (code %d).\n", ret);
     return ret;
+}
+
+
+int _mark_allocated_blocks() {
+
 }
