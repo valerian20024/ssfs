@@ -47,7 +47,7 @@ int is_magic_ok(uint8_t *number) {
     return ret == 0 ? 1 : 0;
 }
 
-int allocated_block(bool* bitmap, int block) {
+int allocate_block(bool* bitmap, uint32_t block) {
     if (block < 0)
         return ssfs_EALLOC;
     bitmap[block] = true;

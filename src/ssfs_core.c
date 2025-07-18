@@ -139,8 +139,9 @@ int mount(char *disk_name) {
     }
 
 
-    // todo :
-    // ret = _mark_allocated_blocks 
+    ret = _initialize_allocated_blocks(allocated_blocks);
+    if (ret != 0)
+        goto cleanup_allocated_blocks;
     // that function is defined in this file, will use shared functions defined
     // in utils. 
     // Just give it ptr to bitmap and disk, it will firstt
@@ -199,6 +200,39 @@ cleanup:
 }
 
 
-int _mark_allocated_blocks() {
+int _initialize_allocated_blocks(bool* bitmap) {
+    int ret = 0;
+    uint8_t buffer[VDISK_SECTOR_SIZE];
 
+    // Read the superblock
+    ret = vdisk_read(global_disk_handle, SUPERBLOCK_SECTOR, buffer);
+    if (ret != 0) 
+        return ret;
+    struct superblock *sb = (struct superblock *)buffer;
+
+    // Compute the number of system blocks and mark them.
+    int system_blocks = 1 + sb->num_inode_blocks;
+    for (int block = 0; block < system_blocks; block++) {
+        allocate_block(bitmap, block);
+    }
+
+    // Read the inode blocks.
+    // for each block, cast it to a inodes struct.
+    // Read the fields
+    for (uint32_t block = 1; block < sb->num_inode_blocks; block++) {
+        ret = vdisk_read(global_disk_handle, block, buffer);
+        // !manage error
+        struct inodes_block *ib = (struct inodes_block *)buffer;
+        
+        for (int i = 0; i < 32; i++) {
+            if (!ib[i].valid)
+                continue;
+
+            for (int d = 0; d < 4; d++) {
+                if (ib->i.direct[d])
+                    allocate_block(bitmap, ib[i].direct[d]);
+            }
+            
+        }
+    }
 }
