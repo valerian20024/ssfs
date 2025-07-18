@@ -28,11 +28,6 @@ struct inode {
 
 typedef struct inode inode_t;
 
-/*
-typedef struct {
-    inode_t inodes[32];
-} inodes_block_t;*/
-
 typedef inode_t inodes_block_t[32];
 
 // ####################
@@ -58,7 +53,10 @@ int is_mounted();
 int is_inode_positive(int inodes_num);
 int is_inode_valid(int inodes_num, int max_inodes_num);
 int is_magic_ok(uint8_t * number);
-int allocate_block(bool* bitmap, uint32_t block);
 int _initialize_allocated_blocks();
+int allocate_block(uint32_t block);
+int _allocate_indirect_block(uint32_t indirect_block);
+int _allocate_double_indirect_block(uint32_t double_indirect_block);
+
 
 #endif

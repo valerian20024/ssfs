@@ -11,12 +11,5 @@ int main(void) {
         false, false, false
     };
 
-    allocate_block(bitmap, 0);
-    allocate_block(bitmap, 4);
-    allocate_block(bitmap, 10);
-
-    for (int i = 0; i < 11; i++) {
-        printf("%d, ", bitmap[i]);
-    }
 
 }

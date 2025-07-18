@@ -22,7 +22,7 @@ const uint8_t MAGIC_NUMBER[16] = {
     0x39, 0x34, 0x30, 0x0f 
 };
 
-bool *allocated_blocks;
+//bool *allocated_blocks = NULL;
 
 
 // This function returns 0 is the disk is not mounted and 1 otherwise.
@@ -47,9 +47,9 @@ int is_magic_ok(uint8_t *number) {
     return ret == 0 ? 1 : 0;
 }
 
-int allocate_block(bool* bitmap, uint32_t block) {
-    //if (block < 0)
-    //    return ssfs_EALLOC;
-    bitmap[block] = true;
+int allocate_block(uint32_t block) {
+    if (allocated_blocks == NULL) 
+        return ssfs_EALLOC;
+    allocated_blocks[block] = true;
     return 0;
 }

@@ -19,6 +19,7 @@ for `buffer` which appears often in functions.
 #include "error.h"
 
 DISK* global_disk_handle = NULL;
+bool* allocated_blocks = NULL;
 
 /**
  * @brief Formats a disk with the Simple and Secure File System (SSFS).
@@ -137,6 +138,7 @@ int mount(char *disk_name) {
         ret = ssfs_EALLOC;
         goto cleanup_global_disk_handle;
     }
+    // todo use the global var !
 
 
     ret = _initialize_allocated_blocks(allocated_blocks);
@@ -200,7 +202,7 @@ cleanup:
 }
 
 
-int _initialize_allocated_blocks(bool* bitmap) {
+int _initialize_allocated_blocks() {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -213,26 +215,70 @@ int _initialize_allocated_blocks(bool* bitmap) {
     // Compute the number of system blocks and mark them.
     int system_blocks = 1 + sb->num_inode_blocks;
     for (int block = 0; block < system_blocks; block++) {
-        allocate_block(bitmap, block);
+        allocate_block(block);
     }
 
-    // Read the inode blocks.
-    // for each block, cast it to a inodes struct.
-    // Read the fields
+    // Foreach inode block in the filesystem
     for (uint32_t block = 1; block < sb->num_inode_blocks; block++) {
         ret = vdisk_read(global_disk_handle, block, buffer);
         // !manage error
         inodes_block_t *ib = (inodes_block_t *)buffer;
         
+        // For each inode in an inode block
         for (int i = 0; i < 32; i++) {
             if (!ib[i]->valid)
                 continue;
 
+            // Allocate direct blocks
             for (int d = 0; d < 4; d++) {
                 if (ib[i]->direct[d])
-                    allocate_block(bitmap, ib[i]->direct[d]);
+                    allocate_block(ib[i]->direct[d]);
             }
+
+            // Allocate indirect1 block and the data block it points to
+            if (ib[i]->indirect1) {
+                _allocate_indirect_block(ib[i]->indirect1);
+            }
+
+            if (ib[i]->indirect2) {
+                _allocate_double_indirect_block(ib[i]->indirect2);
+            }
+
             
         }
     }
+}
+
+// This function will allocate an indirect block as well as
+// all the data blocks it points to.
+// Returns 0 on success, error code if not.
+int _allocate_indirect_block(uint32_t indirect_block) {
+    int ret = 0;
+    /*
+    uint8_t buffer[VDISK_SECTOR_SIZE];
+    
+    allocate_block(indirect_block);
+
+    ret = vdisk_read(global_disk_handle, indirect_block, buffer);
+    if (ret != 0)
+        goto cleanup;
+
+    uint32_t *data_blocks = (uint32_t *)buffer;
+    for (int db = 0; db < 256; db++) {
+        if (data_blocks[db])
+            allocate_block(data_blocks[db]);
+    }
+
+cleanup:*/
+    return ret;
+}
+
+
+// This function will allocate a double indirect block as well as
+// all the indirect block it points to and all the data blocks they point to.
+// Returns 0 on success, error code if not
+int _allocate_double_indirect_block(uint32_t double_indirect_block) {
+    int ret = 0;
+
+    return ret;
 }
