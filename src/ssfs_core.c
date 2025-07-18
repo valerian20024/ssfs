@@ -72,13 +72,13 @@ int format(char *disk_name, int inodes) {
     }
 
     // Initialize and fill the superblock
-    struct superblock sb;
+    superblock_t sb;
     memset(&sb, 0, sizeof(sb));
     memcpy(sb.magic, MAGIC_NUMBER, 16);
     sb.num_blocks       = disk.size_in_sectors;
     sb.num_inode_blocks = inode_blocks;
     sb.block_size       = VDISK_SECTOR_SIZE;
-    memcpy(buffer, &sb, sizeof(struct superblock));
+    memcpy(buffer, &sb, sizeof(superblock_t));
     ret = vdisk_write(&disk, SUPERBLOCK_SECTOR, buffer);
     if (ret != 0)
         goto cleanup;
@@ -122,7 +122,7 @@ int mount(char *disk_name) {
     ret = vdisk_read(disk_handle, SUPERBLOCK_SECTOR, buffer);
     if (ret != 0)
         goto cleanup_shut_down_disk;
-    struct superblock *sb = (struct superblock *)buffer;
+    superblock_t *sb = (superblock_t *)buffer;
 
     // Check magic number
     if (!is_magic_ok(sb->magic)) {
@@ -195,7 +195,7 @@ int _initialize_allocated_blocks() {
     ret = vdisk_read(disk_handle, SUPERBLOCK_SECTOR, buffer);
     if (ret != 0) 
         return ret;
-    struct superblock *sb = (struct superblock *)buffer;
+    superblock_t *sb = (superblock_t *)buffer;
 
     // Compute the number of system blocks and mark them.
     int system_blocks = 1 + sb->num_inode_blocks;
