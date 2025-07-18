@@ -5,11 +5,10 @@
 // if argc and argv not use, replace by "int main(void)" to suppress warnings at compilation
 int main(void) {
 
-    bool bitmap[11] = {
-        false, false, false, false,
-        false, false, false, false,
-        false, false, false
-    };
+    char *disk_name = "testdisk.img";
+    format(disk_name, 90);
 
+    mount(disk_name);
 
+    unmount();
 }

@@ -98,70 +98,65 @@ cleanup:
 int mount(char *disk_name) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
-    DISK disk;
-    bool *allocated_blocks;
 
     if (is_mounted()) {
         ret = ssfs_EMOUNT;
-        goto cleanup;
-    }
-    
-    // Turning on the virtual disk
-    ret = vdisk_on(disk_name, &disk);
-    if (ret != 0) {
-        ret = vdisk_EACCESS;
-        goto cleanup;
-    }
-
-    // Reading superblock
-    ret = vdisk_read(&disk, SUPERBLOCK_SECTOR, buffer);
-    if (ret != 0)
-        goto cleanup_disk;
-    struct superblock *sb = (struct superblock *)buffer;
-
-    // Check magic number
-    if (!is_magic_ok(sb->magic)) {
-        ret = ssfs_EMAGIC;
-        goto cleanup_disk;
+        goto cleanup_simple_error;
     }
 
     // Allocate the global disk pointer
     disk_handle = malloc(sizeof(DISK));
     if (disk_handle == NULL) {
         ret = ssfs_EDISKPTR;
-        goto cleanup_disk;
+        goto cleanup_simple_error;
     }
-    *disk_handle = disk;
+    
+    // Turning on the virtual disk
+    ret = vdisk_on(disk_name, disk_handle);
+    if (ret != 0) {
+        ret = vdisk_EACCESS;
+        goto cleanup_deallocate_disk_handle;
+    }
+
+    // Reading superblock
+    ret = vdisk_read(disk_handle, SUPERBLOCK_SECTOR, buffer);
+    if (ret != 0)
+        goto cleanup_shut_down_disk;
+    struct superblock *sb = (struct superblock *)buffer;
+
+    // Check magic number
+    if (!is_magic_ok(sb->magic)) {
+        ret = ssfs_EMAGIC;
+        goto cleanup_shut_down_disk;
+    }
 
     // Allocating the block allocation bitmap
-    allocated_blocks = (bool *)calloc(sb->num_blocks, sizeof(bool));
-    if (allocated_blocks == NULL) {
+    allocated_blocks_handle = (bool *)calloc(sb->num_blocks, sizeof(bool));
+    if (allocated_blocks_handle == NULL) {
         ret = ssfs_EALLOC;
-        goto cleanup_disk_handle;
+        goto cleanup_shut_down_disk;
     }
-    *allocated_blocks_handle = allocated_blocks; 
-
 
     ret = _initialize_allocated_blocks(allocated_blocks_handle);
     if (ret != 0)
-        goto cleanup_allocated_blocks_handle;
+        goto cleanup_deallocated_blocks_handle;
     
     // If everything went right, simply return.
-    goto cleanup;
+    goto cleanup_simple_error;
 
     // Else, we incrementaly free ressources.
-cleanup_allocated_blocks_handle:
+cleanup_deallocated_blocks_handle:
     free(allocated_blocks_handle);
     allocated_blocks_handle = NULL;
 
-cleanup_disk_handle:
+cleanup_shut_down_disk:
+    vdisk_off(disk_handle);
+
+cleanup_deallocate_disk_handle:
     free(disk_handle);
     disk_handle = NULL;
 
-cleanup_disk:
-    vdisk_off(disk_handle);
-
-cleanup:
+cleanup_simple_error:
     if (ret != 0) {
         fprintf(stderr, "Error when mounting (code %d).\n", ret);
     }
