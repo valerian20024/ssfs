@@ -35,22 +35,24 @@ int create() {
     
     // Look for a free inode. Starting at index 1.
     // Foreach inode_block in the filesystem
-    for (uint32_t ib = 1; ib < 1 + sb->num_inode_blocks; ib++) {
-        ret = vdisk_read(disk_handle, ib, buffer);
+    uint32_t inode_block_num = 0;
+    for (uint32_t block_num = 1; block_num < 1 + sb->num_inode_blocks; block_num++) {
+        ret = vdisk_read(disk_handle, block_num, buffer);
         if (ret != 0) {
             ret = vdisk_EACCESS;
             goto cleanup;
         }
 
+        
         inodes_block_t *inodes_block = (inodes_block_t *)buffer;
 
         // Foreach inode
         for (int i = 0; i < 32; i++) {
-            if (inodes_block[i]->valid == 0) {
+            if (inodes_block[0][i].valid == 0) {
 
-                inodes_block[i]->valid = 1;
+                inodes_block[0][i].valid = 1;
 
-                ret = vdisk_write(disk_handle, ib, buffer);  //todo : verify the buffer content is the same as inodes_block
+                ret = vdisk_write(disk_handle, block_num, buffer);
                 if (ret != 0) {
                     ret = vdisk_EACCESS;
                     goto cleanup;
@@ -63,9 +65,10 @@ int create() {
                 }
 
                 // Return the inode number
-                return ib * 32 + i;
+                return inode_block_num * 32 + i;
             }
         }
+        inode_block_num++;
     }
 
 cleanup:
