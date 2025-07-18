@@ -221,7 +221,7 @@ int _initialize_allocated_blocks() {
     // Foreach inode block in the filesystem
     for (uint32_t block = 1; block < sb->num_inode_blocks; block++) {
         ret = vdisk_read(global_disk_handle, block, buffer);
-        // !manage error
+        //! manage error must deallocate the direct blocks!
         inodes_block_t *ib = (inodes_block_t *)buffer;
         
         // For each inode in an inode block
@@ -235,18 +235,15 @@ int _initialize_allocated_blocks() {
                     allocate_block(ib[i]->direct[d]);
             }
 
-            // Allocate indirect1 block and the data block it points to
-            if (ib[i]->indirect1) {
+            if (ib[i]->indirect1)
                 _allocate_indirect_block(ib[i]->indirect1);
-            }
 
-            if (ib[i]->indirect2) {
-                _allocate_double_indirect_block(ib[i]->indirect2);
-            }
-
-            
+            if (ib[i]->indirect2)
+                _allocate_double_indirect_block(ib[i]->indirect2);            
         }
     }
+
+    return ret;
 }
 
 // This function will allocate an indirect block as well as
@@ -254,10 +251,7 @@ int _initialize_allocated_blocks() {
 // Returns 0 on success, error code if not.
 int _allocate_indirect_block(uint32_t indirect_block) {
     int ret = 0;
-    /*
     uint8_t buffer[VDISK_SECTOR_SIZE];
-    
-    allocate_block(indirect_block);
 
     ret = vdisk_read(global_disk_handle, indirect_block, buffer);
     if (ret != 0)
@@ -268,8 +262,9 @@ int _allocate_indirect_block(uint32_t indirect_block) {
         if (data_blocks[db])
             allocate_block(data_blocks[db]);
     }
+    allocate_block(indirect_block);
 
-cleanup:*/
+cleanup:
     return ret;
 }
 
@@ -279,6 +274,22 @@ cleanup:*/
 // Returns 0 on success, error code if not
 int _allocate_double_indirect_block(uint32_t double_indirect_block) {
     int ret = 0;
+    uint8_t buffer[VDISK_SECTOR_SIZE];  // storing 2-indirect block
 
+    ret = vdisk_read(global_disk_handle, double_indirect_block, buffer);
+    if (ret != 0)
+        goto cleanup;
+
+    uint32_t *indirect_ptrs = (uint32_t *)buffer;
+    for (int ip = 0; ip < 256; ip++) {
+        if (indirect_ptrs[ip] == 0)
+            continue;
+
+        _allocate_indirect_block(indirect_ptrs[ip]);
+    }
+
+    allocate_block(double_indirect_block);
+
+cleanup:
     return ret;
 }
