@@ -26,9 +26,9 @@ int is_mounted() {
     return disk_handle == NULL ? 0 : 1;
 }
 
-// This function returns 0 is the inode is negative or zero, 1 if it's strictly positive.
+// This function returns 0 is the inode is negative, 1 if it's positive or zero.
 int is_inode_positive(int inode_num) {
-    return inode_num > 0;
+    return inode_num >= 0;
 }
 
 // This function returns 0 is the inode is not valid and 1 if it is. 
