@@ -6,7 +6,19 @@
 #include "ssfs_internal.h"
 #include "error.h"
 
-
+/**
+ * @brief Retrieves the size of a file identified by its inode number.
+ *
+ * This function queries the file system to obtain details about a specific file,
+ * identified by its unique inode number.
+ *
+ * @param inode_num The inode number of the file to retrieve information for.
+ *
+ * @return The file size in bytes on success.
+ * @return Negative integer (error codes) on failure.
+ *
+ * @note The error codes are defined in `error.c`.
+ */
 int stat(int inode_num) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -52,8 +64,17 @@ cleanup:
     return ret;
 }
 
-// Creates a file and, on success, returns the i-node number that identifies the
-// file
+/**
+ * @brief Creates a new file in the file system.
+ *
+ * This function allocates the necessary resources to create a new file,
+ * which consists of assigning an inode.
+ *
+ * @return The inode number that identifies the newly created file on success.
+ * @return Negative integer (error codes) on failure.
+ *
+ * @note Inode numbers start from zero included.
+ */
 int create() {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];

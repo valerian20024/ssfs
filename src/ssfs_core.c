@@ -93,7 +93,20 @@ cleanup:
 }
 
 /**
- * 
+ * @brief Mounts a virtual disk for use.
+ *
+ * This function prepares a virtual disk, specified by its image file, for access
+ * by the file system. It initializes internal data structures and makes the
+ * file system ready for operations like creating, reading, and writing files.
+ *
+ * @param disk_name The file path of the disk image to mount, as a C-style string.
+ *
+ * @return 0 on success.
+ * @return Negative integer (error codes) on failure.
+ *
+ * @note This implementation assumes and enforces that only a single volume
+ * can be mounted at any given time. Subsequent calls to `mount` while another
+ * volume is already mounted will result in an error.
  */
 int mount(char *disk_name) {
     fprintf(stdout, "mount\n");
@@ -165,7 +178,16 @@ cleanup_simple_error:
 }
 
 /**
- * 
+ * @brief Unmounts the currently mounted virtual disk volume.
+ *
+ * This function disengages the mounted virtual disk from the file system,
+ * releasing associated resources and making it unavailable for further operations
+ * until mounted again.
+ *
+ * @return 0 on success.
+ * @return Negative integers (error codes) on failure.
+ *
+ * @note This function will fail if no volume is currently mounted.
  */
 int unmount() {
     int ret = 0;
@@ -187,10 +209,21 @@ cleanup:
     return ret;
 }
 
+/**
+ * @brief Initializes the block allocation bitmap based on existing file system usage.
+ *
+ * This internal procedure scan sthe file system to identify all blocks currently
+ * in use (e.g., by the superblock, inodes, and existing data). It then updates
+ * a global bitmap variable to reflect these used blocks.
+ *
+ * @return 0 on success.
+ * @return Negative integer (error codes) on failure.
+ *
+ * @note This function is primarily used during the `mount()` operation to establish
+ * the initial state of the bitmap.
+ */
 
 int _initialize_allocated_blocks() {
-    fprintf(stdout, "_initialize_allocated_blocks\n");
-
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -200,29 +233,21 @@ int _initialize_allocated_blocks() {
         return ret;
     superblock_t *sb = (superblock_t *)buffer;
 
-    fprintf(stdout, "System blocks :\n");
     // Compute the number of system blocks and mark them.
     int system_blocks = 1 + sb->num_inode_blocks;
     for (int block_num = 0; block_num < system_blocks; block_num++) {
         allocate_block(block_num);
     }
 
-    fprintf(stdout, "Entering For each inode block in the filesystem\n");
-
     // Foreach inode block in the filesystem
     for (uint32_t block_num = 1; block_num < 1 + sb->num_inode_blocks; block_num++) {
-        fprintf(stdout, "block_num is %d\n", block_num);
         ret = vdisk_read(disk_handle, block_num, buffer);
         //! manage error must deallocate the direct blocks!
         inodes_block_t *ib = (inodes_block_t *)buffer;
         
-        fprintf(stdout, "Entering For each inode in the block\n");
         // For each inode in an inode block, if inode has been allocated
         for (int i = 0; i < 32; i++) {
-            fprintf(stdout, "inode i is %d\n", i);
             if (ib[0][i].valid) {
-                fprintf(stdout, "inode %d is valid\n", i);
-                fprintf(stdout, "Entering Allocating direct blocks\n");
                 // Allocate direct blocks
                 for (int d = 0; d < 4; d++) {
                     fprintf(stdout, "d is %d\n", d);
@@ -232,7 +257,6 @@ int _initialize_allocated_blocks() {
                     }
                 }
 
-                fprintf(stdout, "Entering allocating indirect block\n" );
                 if (ib[0][i].indirect1)
                     _allocate_indirect_block(ib[0][i].indirect1);
 
@@ -245,9 +269,20 @@ int _initialize_allocated_blocks() {
     return ret;
 }
 
-// This function will allocate an indirect block as well as
-// all the data blocks it points to.
-// Returns 0 on success, error code if not.
+/**
+ * @brief Allocates an indirect block and its associated data blocks.
+ *
+ * This function handles the allocation of a specified indirect block within the file system,
+ * and also allocates all the data blocks that this indirect block is capable
+ * of pointing to.
+ *
+ * @param indirect_block The logical block number of the indirect block to allocate.
+ *
+ * @return 0 on success.
+ * @return Negative integer (error codes) on failure.
+ *
+ * @note This is an internal helper function, typically not exposed to the public API.
+ */
 int _allocate_indirect_block(uint32_t indirect_block) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -267,10 +302,22 @@ cleanup:
     return ret;
 }
 
-
-// This function will allocate a double indirect block as well as
-// all the indirect block it points to and all the data blocks they point to.
-// Returns 0 on success, error code if not
+/**
+ * @brief Allocates a double indirect block and all associated indirect and data blocks.
+ *
+ * This function is responsible for the allocation of a double indirect block.
+ * This includes allocating the double indirect block itself, every indirect block it 
+ * points to, and then all the data blocks that each of those indirect blocks 
+ * point to.
+ *
+ * @param double_indirect_block The logical block number of the double indirect block
+ * to allocate.
+ *
+ * @return 0 on success.
+ * @return Negative integers (error codes) on failure.
+ *
+ * @note This is an internal helper function, typically not exposed to the public API.
+ */
 int _allocate_double_indirect_block(uint32_t double_indirect_block) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];  // storing 2-indirect block
