@@ -99,7 +99,6 @@ int create() {
             goto cleanup;
         }
 
-        
         inodes_block_t *inodes_block = (inodes_block_t *)buffer;
 
         // Foreach inode
@@ -131,4 +130,37 @@ cleanup:
     return ret;
 }
 
-//int delete(int inode_num) {}
+/**
+ * @brief Deletes a file from the file system.
+ *
+ * This function removes the file identified by `inode_num` from the file system.
+ * This involves resetting the corresponding inode structure and freeing all the
+ * blocks used by that file.
+ *
+ * @param inode_num The inode number of the file to be deleted.
+ *
+ * @return 0 on success.
+ * @return Negative integer (error codes) on failure.
+ *
+ * @note As "SSFS is said to be safe because everything is always zero, 
+ * unless other values are strictly needed", this function must rewrite zeros
+ * on all deleted blocks.
+ */
+int delete(int inode_num) {
+    int ret = 0;
+    uint8_t buffer[VDISK_SECTOR_SIZE];
+
+    if (!is_mounted())
+        return ssfs_EMOUNT;
+
+    ret = vdisk_read(disk_handle, 0, buffer);
+    if (ret != 0) {
+        ret = vdisk_EACCESS;
+        goto cleanup;
+    }
+    superblock_t *sb = (superblock_t *)buffer;
+
+
+cleanup:
+    return ret;
+}

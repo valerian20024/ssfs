@@ -258,84 +258,13 @@ int _initialize_allocated_blocks() {
                 }
 
                 if (ib[0][i].indirect1)
-                    _allocate_indirect_block(ib[0][i].indirect1);
+                    allocate_indirect_block(ib[0][i].indirect1);
 
                 if (ib[0][i].indirect2)
-                    _allocate_double_indirect_block(ib[0][i].indirect2);
+                    allocate_double_indirect_block(ib[0][i].indirect2);
             }
         }
     }
 
-    return ret;
-}
-
-/**
- * @brief Allocates an indirect block and its associated data blocks.
- *
- * This function handles the allocation of a specified indirect block within the file system,
- * and also allocates all the data blocks that this indirect block is capable
- * of pointing to.
- *
- * @param indirect_block The logical block number of the indirect block to allocate.
- *
- * @return 0 on success.
- * @return Negative integer (error codes) on failure.
- *
- * @note This is an internal helper function, typically not exposed to the public API.
- */
-int _allocate_indirect_block(uint32_t indirect_block) {
-    int ret = 0;
-    uint8_t buffer[VDISK_SECTOR_SIZE];
-
-    ret = vdisk_read(disk_handle, indirect_block, buffer);
-    if (ret != 0)
-        goto cleanup;
-
-    uint32_t *data_blocks = (uint32_t *)buffer;
-    for (int db = 0; db < 256; db++) {
-        if (data_blocks[db])
-            allocate_block(data_blocks[db]);
-    }
-    allocate_block(indirect_block);
-
-cleanup:
-    return ret;
-}
-
-/**
- * @brief Allocates a double indirect block and all associated indirect and data blocks.
- *
- * This function is responsible for the allocation of a double indirect block.
- * This includes allocating the double indirect block itself, every indirect block it 
- * points to, and then all the data blocks that each of those indirect blocks 
- * point to.
- *
- * @param double_indirect_block The logical block number of the double indirect block
- * to allocate.
- *
- * @return 0 on success.
- * @return Negative integers (error codes) on failure.
- *
- * @note This is an internal helper function, typically not exposed to the public API.
- */
-int _allocate_double_indirect_block(uint32_t double_indirect_block) {
-    int ret = 0;
-    uint8_t buffer[VDISK_SECTOR_SIZE];  // storing 2-indirect block
-
-    ret = vdisk_read(disk_handle, double_indirect_block, buffer);
-    if (ret != 0)
-        goto cleanup;
-
-    uint32_t *indirect_ptrs = (uint32_t *)buffer;
-    for (int ip = 0; ip < 256; ip++) {
-        if (indirect_ptrs[ip] == 0)
-            continue;
-
-        _allocate_indirect_block(indirect_ptrs[ip]);
-    }
-
-    allocate_block(double_indirect_block);
-
-cleanup:
     return ret;
 }
