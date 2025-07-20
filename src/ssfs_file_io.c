@@ -9,6 +9,10 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
+
+    if (len == 0)
+        return 0;
+
     /*if (!is_mounted()) {
         ret = ssfs_EMOUNT;
         goto cleanup;
@@ -49,7 +53,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
     // On commence à lire
 
     
-    int required_data_blocks_num = 1 + (offset + len) / 1024;
+    int required_data_blocks_num = 1 + (offset + len - 1) / 1024;
     printf("required_data_blocks_num : %d\n", required_data_blocks_num);
 
     uint32_t data_blocks_addresses[required_data_blocks_num];

@@ -41,7 +41,7 @@ void test2() {
 
     mount(disk_name);
     
-    read(1, data, 2048, 0);
+    read(1, data, 1, 0);
     
     unmount();
 }
