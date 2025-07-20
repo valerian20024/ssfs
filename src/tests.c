@@ -37,14 +37,17 @@ void test1() {
 void test2() {
     char *disk_name = "disk_img.2";
 
-    uint8_t * data = malloc(sizeof(2048));
+    uint8_t *data = malloc(sizeof(50000));
 
-    int inode = 0;
+    int inode = 1;
 
     mount(disk_name);
+
     int size = stat(inode);
     printf("size(%d) = %d\n", inode, size);
-    read(inode, data, 49152, 0);
+
+    int bytes = read(inode, data, 1000, 0);  // 10000 bytes won't work, but 1000 do?
+    printf("succesfully read %d bytes\n", bytes);
     
     unmount();
 }

@@ -4,14 +4,23 @@
 #include "ssfs_internal.h"
 #include "error.h"
 
+#include <string.h>
+
+/**
+ * @note Won't test file reachability if reading 0 bytes.
+ */
 int read(int inode_num, uint8_t *data, int len, int offset) {
     printf("read called with inode_num=%d, data=%p, len=%d, offset=%d\n", inode_num, data, len, offset);
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
-
+    
     uint32_t _len = (uint32_t) len;
     uint32_t _offset = (uint32_t) offset;
 
+    // Trivial empty reading
+    if (_len == 0) {
+        return 0;
+    }
     
     // This buffer will hold the addresses of all the data blocks we need to look
     // It is initialized early so that we can use the goto instructions.
@@ -19,10 +28,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
     printf("required_data_blocks_num : %d\n", required_data_blocks_num);
     uint32_t data_blocks_addresses[required_data_blocks_num];  //todo use malloc instead of the stack
 
-    if (_len == 0) {
-        ret = ssfs_EREAD;
-        goto cleanup;
-    }
+    
         
     if (!is_mounted()) {
         ret = ssfs_EMOUNT;
@@ -66,7 +72,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
     }
 
     // Read request must be smaller than the file 
-    if (_offset + _len < target_inode->size) {
+    if (_offset + _len > target_inode->size) {
         ret = ssfs_EREAD;
         goto cleanup;
     }
@@ -105,6 +111,9 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
                 bytes_remaining_in_block :
                 bytes_remaining_in_total;
 
+            memcpy(data + bytes_read, buffer, bytes_to_copy);
+            bytes_read += bytes_to_copy;
+
             offset_within_block = 0;
         }
     }
@@ -113,7 +122,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
 
 
 cleanup:
-    if (ret != 0)
+    if (ret < 0)
         fprintf(stderr, "Error when reading (code %d).\n", ret);
     return ret;
 }
