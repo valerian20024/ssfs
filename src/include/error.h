@@ -15,5 +15,6 @@ extern const int ssfs_EDISKPTR;
 extern const int ssfs_EALLOC;
 extern const int ssfs_EINODE;
 extern const int ssfs_E3RDPARTY;
+extern const int ssfs_EREAD;
 
 #endif

@@ -39,9 +39,12 @@ void test2() {
 
     uint8_t * data = malloc(sizeof(2048));
 
+    int inode = 0;
+
     mount(disk_name);
-    
-    read(1, data, 1, 0);
+    int size = stat(inode);
+    printf("size(%d) = %d\n", inode, size);
+    read(inode, data, 49152, 0);
     
     unmount();
 }
