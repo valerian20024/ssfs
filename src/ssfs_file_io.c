@@ -1,10 +1,10 @@
 //! This file does blablabla
 
+#include <string.h>
+
 #include "fs.h"
 #include "ssfs_internal.h"
 #include "error.h"
-
-#include <string.h>
 
 /**
  * @note Won't test file reachability if reading 0 bytes.
@@ -94,7 +94,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
     // todo check when offset is greater than the size of one block (eg we start at 3rd block)
     // todo will need to use modulo right above ^^^ Also check get_file_block_addr()
 
-    while (bytes_read < _len) {
+    /*while (bytes_read < _len) {
         // For each data block address
         for (uint32_t addr_num = 0; addr_num < required_data_blocks_num; addr_num++) {
             // Put in buffer the data block content
@@ -111,11 +111,42 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
                 bytes_remaining_in_block :
                 bytes_remaining_in_total;
 
-            memcpy(data + bytes_read, buffer, bytes_to_copy);
+            // When addr_num = 1, any of the two functions would change the value of *disk_handle 
+            //memcpy(data + bytes_read, buffer, bytes_to_copy);
+            //memset(data + bytes_read, buffer, bytes_to_copy);
+
             bytes_read += bytes_to_copy;
 
             offset_within_block = 0;
         }
+    }*/
+
+    // For each data block address
+    for (uint32_t addr_num = 0; addr_num < required_data_blocks_num; addr_num++) {
+
+        if (bytes_read >= _len)
+            break;
+        // Put in buffer the data block content
+        vdisk_read(disk_handle, data_blocks_addresses[addr_num], buffer);
+        //! error
+
+        // Need to copy from the current block the minium between:
+        // 1. Bytes remaining in the block.
+        // 2. Bytes remaining to fulfill the '_len' request.
+        uint32_t bytes_remaining_in_block = VDISK_SECTOR_SIZE - offset_within_block;
+        uint32_t bytes_remaining_in_total = _len - bytes_read;
+
+        uint32_t bytes_to_copy = (bytes_remaining_in_block < bytes_remaining_in_total) ?
+            bytes_remaining_in_block :
+            bytes_remaining_in_total;
+
+        // When addr_num = 1, any of the two functions would change the value of *disk_handle 
+        //memcpy(data + bytes_read, buffer, bytes_to_copy);
+        //memset(data + bytes_read, buffer, bytes_to_copy);
+
+        bytes_read += bytes_to_copy;
+
+        offset_within_block = 0;
     }
 
     ret = (int)bytes_read;
