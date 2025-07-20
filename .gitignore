@@ -1,2 +1,8 @@
 src/obj
 src/fs_test
+.VSCodeCounter/
+.vscode/
+src/disk_img.2
+src/disk_img.2.old
+src/testdisk.bak
+src/testdisk.img

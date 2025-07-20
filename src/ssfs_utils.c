@@ -44,6 +44,26 @@ int is_magic_ok(uint8_t *number) {
 }
 
 
+int erase_block_content(uint32_t block_num) {
+    int ret = 0;
+    uint8_t buffer[VDISK_SECTOR_SIZE];
+    memset(buffer, 0, VDISK_SECTOR_SIZE);
+
+    ret = vdisk_write(disk_handle, block_num, buffer);
+    if (ret != 0) {
+        ret = vdisk_EACCESS;
+        goto cleanup;
+    }
+
+    ret = vdisk_sync(disk_handle);
+    if (ret != 0) {
+        ret = vdisk_EACCESS;
+        goto cleanup;
+    }
+
+cleanup:
+    return ret;
+}
 
 /**
  * @brief Sets the allocation status of a specific block in the file system's bitmap.
@@ -63,6 +83,10 @@ int is_magic_ok(uint8_t *number) {
 int set_block_status(uint32_t block, bool status) {
     if (allocated_blocks_handle == NULL) 
         return ssfs_EALLOC;
+
+    if (status == false) 
+        erase_block_content(block);
+
     allocated_blocks_handle[block] = status;
     return 0;
 }
@@ -184,7 +208,7 @@ int _update_double_indirect_block_status(uint32_t double_indirect_block, bool st
 
     uint32_t *indirect_ptrs = (uint32_t *)buffer;
     for (int ip = 0; ip < 256; ip++) {
-        if (indirect_ptrs[ip] == 0)
+        if (indirect_ptrs[ip] == 0)  // todo change this
             continue;
 
         _update_indirect_block_status(indirect_ptrs[ip], status);

@@ -250,9 +250,7 @@ int _initialize_allocated_blocks() {
             if (ib[0][i].valid) {
                 // Allocate direct blocks
                 for (int d = 0; d < 4; d++) {
-                    fprintf(stdout, "d is %d\n", d);
                     if (ib[0][i].direct[d]) {
-                        fprintf(stdout, "ib[0][i].direct[d] is true\n");
                         allocate_block(ib[0][i].direct[d]);
                     }
                 }

@@ -1,6 +1,7 @@
 //! this file does blablabla
 
 #include <stdint.h>
+#include <string.h>
 
 #include "fs.h"
 #include "ssfs_internal.h"
@@ -33,6 +34,7 @@ int stat(int inode_num) {
     }
     superblock_t *sb = (superblock_t *)buffer;
     
+    // Checking validity of the function parameter
     uint32_t total_inodes = sb->num_inode_blocks * 32;
     if (!is_inode_valid(inode_num, total_inodes)) {
         ret = ssfs_EALLOC;
@@ -160,7 +162,53 @@ int delete(int inode_num) {
     }
     superblock_t *sb = (superblock_t *)buffer;
 
+    // Checking validity of the function parameter
+    uint32_t total_inodes = sb->num_inode_blocks * 32;
+    if (!is_inode_valid(inode_num, total_inodes)) {
+        ret = ssfs_EALLOC;
+        goto cleanup;
+    }
+
+    // Determining which precise inode we are looking for
+    uint32_t target_inode_block = inode_num / 32;
+    uint32_t target_inode_num   = inode_num % 32;
+
+    // Reading the sector where the inode is (skip the superblock)
+    ret = vdisk_read(disk_handle, 1 + target_inode_block, buffer);
+    if (ret != 0) {
+        ret = vdisk_EACCESS;
+        goto cleanup;
+    }
+    inodes_block_t *ib = (inodes_block_t *)buffer;
+
+    inode_t * target_inode = &ib[0][target_inode_num]; 
+    if (!target_inode->valid) {
+        ret = ssfs_EINODE;
+        goto cleanup;
+    }
+
+    // Mark the inode as free
+    target_inode->valid = 0;
+    vdisk_write(disk_handle, 1 + target_inode_block, buffer);
+
+    // Freeing blocks
+    for (int d = 0; d < 4; d++) {
+        if (target_inode->direct[d]) {
+            deallocate_block(target_inode->direct[d]);
+        }
+    }
+
+    if (target_inode->indirect1) {
+        deallocate_indirect_block(target_inode->indirect1);
+    }
+
+    if (target_inode->indirect2) {
+        deallocate_double_indirect_block(target_inode->indirect2);
+    }
 
 cleanup:
+    if (ret != 0)
+        fprintf(stderr, "Error when deleting a file (code %d)\n", ret);
     return ret;
 }
+

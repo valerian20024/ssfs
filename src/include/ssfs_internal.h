@@ -55,6 +55,10 @@ int is_inode_valid(int inodes_num, int max_inodes_num);
 int is_magic_ok(uint8_t * number);
 int _initialize_allocated_blocks();
 
+int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, int max_addresses);
+
+int erase_block_content(uint32_t block_num);
+
 int set_block_status(uint32_t block, bool status);
 int allocate_block(uint32_t block);
 int deallocate_block(uint32_t block);
