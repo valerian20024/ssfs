@@ -51,13 +51,13 @@ void test2() {
     int bytes = read(inode, data, len, offset);  // 10000 bytes won't work, but 1000 do?
     printf("succesfully read %d bytes\n", bytes);
     
-    printf("Content of data:\n");
+    /*printf("Content of data:\n");
     for (int i = 0; i < bytes; i++) {
         printf("%02x ", data[i]);
         if ((i + 1) % 16 == 0) printf("\n");
         if ((i + 1) % 128 == 0) printf("\n");
     }
     printf("\n");
-
+    */
     unmount();
 }
