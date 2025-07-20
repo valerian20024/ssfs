@@ -55,13 +55,13 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
     uint32_t data_blocks_addresses[required_data_blocks_num];
     // fill the addresses
 
-    get_file_block_addresses(target_inode, data_blocks_addresses, 10);
+    get_file_block_addresses(target_inode, data_blocks_addresses, required_data_blocks_num);
 
     for (int i = 0; i < required_data_blocks_num; i++) {
         printf("data_blocks_addresses[%d] = %u\n", i, data_blocks_addresses[i]);
     }
 
-cleanup:
+//cleanup:
     if (ret != 0)
         fprintf(stderr, "Error when reading (code %d).\n", ret);
     return ret;
@@ -78,7 +78,7 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, int max_a
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
     for (int d = 0; d < 4; d++) {
-        if (inode->direct[d]) {
+        if (inode->direct[d] && addresses_collected < max_addresses) {
             address_buffer[addresses_collected++] = inode->direct[d];
             printf("direct : address_collected : %d\n", addresses_collected);
         }
@@ -90,7 +90,7 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, int max_a
         uint32_t *indirect_ptrs = (uint32_t *)buffer;
 
         for (int db = 0; db < 256; db++) {
-            if (indirect_ptrs[db]) {
+            if (indirect_ptrs[db] && addresses_collected < max_addresses) {
                 address_buffer[addresses_collected++] = indirect_ptrs[db];
                 printf("indirect : address_collected : %d\n", addresses_collected);
             }
@@ -110,7 +110,7 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, int max_a
                 uint32_t *indirect_ptrs = (uint32_t *)indirect_pointers_buffer;
 
                 for (int db = 0; db < 256; db++) {
-                    if (indirect_ptrs[db]) {
+                    if (indirect_ptrs[db] && addresses_collected < max_addresses) {
                         address_buffer[addresses_collected++] = indirect_ptrs[db];
                         printf("double indirect : address_collected : %d\n", addresses_collected);
                     }
@@ -125,6 +125,7 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, int max_a
 
 int write(int inode_num, uint8_t *data, int len, int offset) {
     int ret = 0;
+    goto cleanup;
 cleanup:
     return ret;
 }

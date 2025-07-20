@@ -3,9 +3,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-void test1();
-void test2();
-
 
 // format, mount, create 10 files, give stats, delete 5, create 10, unmount
 void test1() {
@@ -44,7 +41,7 @@ void test2() {
 
     mount(disk_name);
     
-    read(2, data, 2048, 0);
+    read(1, data, 2048, 0);
     
     unmount();
 }

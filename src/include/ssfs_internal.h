@@ -49,6 +49,9 @@ extern const unsigned char MAGIC_NUMBER[];
 // # Prototypes declaration #
 // ##########################
 
+void test1();
+void test2();
+
 int is_mounted();
 int is_inode_positive(int inodes_num);
 int is_inode_valid(int inodes_num, int max_inodes_num);
