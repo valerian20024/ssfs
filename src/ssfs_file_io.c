@@ -109,7 +109,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
         }
     }
 
-    ret = bytes_read;
+    ret = (int)bytes_read;
 
 
 cleanup:
