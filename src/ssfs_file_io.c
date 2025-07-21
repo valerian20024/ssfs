@@ -94,33 +94,6 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
     // todo check when offset is greater than the size of one block (eg we start at 3rd block)
     // todo will need to use modulo right above ^^^ Also check get_file_block_addr()
 
-    /*while (bytes_read < _len) {
-        // For each data block address
-        for (uint32_t addr_num = 0; addr_num < required_data_blocks_num; addr_num++) {
-            // Put in buffer the data block content
-            vdisk_read(disk_handle, data_blocks_addresses[addr_num], buffer);
-            //! error
-
-            // Need to copy from the current block the minium between:
-            // 1. Bytes remaining in the block.
-            // 2. Bytes remaining to fulfill the '_len' request.
-            uint32_t bytes_remaining_in_block = VDISK_SECTOR_SIZE - offset_within_block;
-            uint32_t bytes_remaining_in_total = _len - bytes_read;
-
-            uint32_t bytes_to_copy = (bytes_remaining_in_block < bytes_remaining_in_total) ?
-                bytes_remaining_in_block :
-                bytes_remaining_in_total;
-
-            // When addr_num = 1, any of the two functions would change the value of *disk_handle 
-            //memcpy(data + bytes_read, buffer, bytes_to_copy);
-            //memset(data + bytes_read, buffer, bytes_to_copy);
-
-            bytes_read += bytes_to_copy;
-
-            offset_within_block = 0;
-        }
-    }*/
-
     // For each data block address
     for (uint32_t addr_num = 0; addr_num < required_data_blocks_num; addr_num++) {
 
@@ -160,10 +133,7 @@ cleanup:
 
 
 int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, int max_addresses) {
-
-    //! need to stop avec max_addresses
     int ret = 0;
-    printf("get_file_block_addresses called with inode=%p, address_buffer=%p, max_addresses=%d\n", inode, address_buffer, max_addresses);
 
     int addresses_collected = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -214,11 +184,90 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, int max_a
 }
 
 
-/*int write(int inode_num, uint8_t *data, int len, int offset) {
+int write(int inode_num, uint8_t *data, int _len, int _offset) {
+    uint32_t len = (uint32_t) _len;
+    uint32_t offset = (uint32_t) _offset;
 
-//! cast len and offset cause it sucks
     int ret = 0;
+    uint8_t buffer[VDISK_SECTOR_SIZE];
+
+    // Determining which precise inode we are looking for
+    uint32_t target_inode_block = inode_num / 32;
+    uint32_t target_inode_num   = inode_num % 32;
+
+    printf("inode blocks\n target_inode_block : %d\n target_inode_num : %d\n", target_inode_block, target_inode_num);
+
+    ret = vdisk_read(disk_handle, 1 + target_inode_block, buffer);
+    if (ret != 0) {
+        ret = vdisk_EACCESS;
+        goto cleanup;
+    }
+
+    inodes_block_t* ib = (inodes_block_t *)buffer;
+    inode_t *target_inode = &ib[0][target_inode_num];
+
+    // Case 1.1
+    if (len == 0)
+        return 0;
+    // Case 1.2 without Case 6
+    if (offset < 0 && (-offset) + len < target_inode->size)
+        return 0;
+
+    
+
+    /*
+    
+    1 - len = 0 => OK return
+      - offset < 0 => error
+
+    2 - offset >= 0 && offset + len <= size : on ecrit dans le fichier sans allocation supplementaire
+
+    3 - offset <= size et offset + len > size : on ecrit dans le fichier et on alloue en plus et on écrit dedans
+        - allouer combien de blocks ? Retrouver leur valeur, ecrire dedans. ecrire combien de bytes dedans ?
+    4 - offset = size : alors on ne doit pas ecrire dans le fichier mais allouer des blocs et ecrire dedans 
+        - allouer combien de blocks ? Retrouver leur valeur, ecrire dedans. ecrire combien de bytes dedans ?
+    5 - offset > size : on ne doit pas ecrire dans le fichier, mais on alloue, on ecrit des zeros et on ecrit dedans
+        - allouer combien de blocks ? Retrouver leur valeur, ecrire dedans. ecrire combien de bytes dedans et apres combien de zeros ?
+    6 - len > size, alors on fait un tour de passe passe, et on retombe sur le cas 4 avec offset = 0, et on a calculé jusqu'où aller;
+
+    -> Il faut une fonction qui ecrit dans le fichier de base, sans allouer. On lui passe les valeurs 
+    qu'il faut pour qu'elle fasse son travail.
+
+    -> Il faut un fonction qui va allouer des blocks et ecrire dedans ce qu'il faut.
+    "allouer" ça veut dire flip un bit dans la bitmap ET changer les addresses de direct, ind, ind2 dans l'inode.
+    Il faut aussi penser à changer la taille du fichier dans l'inode.
+
+    */
+
+
+
+
+
     goto cleanup;
 cleanup:
     return ret;
-}*/
+}
+
+/**
+ * This function will write only inside an existing file
+ */
+int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) {
+
+    // On a inode
+    // On va chercher toutes les addr de blocks de data (on utilise une fonction déjà faite)
+    // on a offset et len et on veut copier depuis data vers le fichier
+    // on copie jusqu'à ce qu'on ait copié assez de bytes (len)
+        // on calcule le premier block dans lequel on va
+        // la premiere fois, offset in the block c'est offset, ensuite c'est zero
+    
+    // on lit le secteur, on change les bytes, on écrit le secteur, on sync
+    // Il faut aussi déterminer le minimum de bytes entre les bytes qu'il reste dans le block et les bytes qu'il reste pour satisfaire la requete pour savoir combien de bytes écrire.
+
+    return 0;
+}
+
+int write_out_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) {
+    return 0;
+}
+
+

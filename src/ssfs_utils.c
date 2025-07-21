@@ -224,7 +224,7 @@ cleanup:
  * @brief Sets the allocation status to "in use" of a double indirect block and all associated indirect and data blocks.
  *
  * @param double_indirect_block The numerical identifier (block number) of the block whose status is to be changed.
-* @param status A boolean value indicating the new status: `true` for allocated, `false` to mark it as free.
+ * @param status A boolean value indicating the new status: `true` for allocated, `false` to mark it as free.
  *
  * @return 0 on success.
  * @return Negative integers (error codes) on failure.

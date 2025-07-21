@@ -48,7 +48,7 @@ void test2() {
     int size = stat(inode);
     printf("size(%d) = %d\n", inode, size);
 
-    int bytes = read(inode, data, len, offset);  // 10000 bytes won't work, but 1000 do?
+    int bytes = read(inode, data, len, offset);
     printf("succesfully read %d bytes\n", bytes);
     
     /*printf("Content of data:\n");

@@ -188,7 +188,12 @@ int delete(int inode_num) {
     }
 
     // Mark the inode as free
+    // todo test this !!
     target_inode->valid = 0;
+    target_inode->size = 0;
+    memset(target_inode->direct, 0, sizeof(target_inode->direct));
+    target_inode->indirect1 = 0;
+    target_inode->indirect2 = 0;
     vdisk_write(disk_handle, 1 + target_inode_block, buffer);
 
     // Freeing blocks
