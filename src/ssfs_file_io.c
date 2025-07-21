@@ -9,6 +9,7 @@
 /**
  * @note Won't test file reachability if reading 0 bytes.
  */
+// todo change _len for len and inversely (like in write)
 int read(int inode_num, uint8_t *data, int len, int offset) {
     printf("read called with inode_num=%d, data=%p, len=%d, offset=%d\n", inode_num, data, len, offset);
     int ret = 0;
@@ -93,6 +94,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
 
     // todo check when offset is greater than the size of one block (eg we start at 3rd block)
     // todo will need to use modulo right above ^^^ Also check get_file_block_addr()
+    //* See write function
 
     // For each data block address
     for (uint32_t addr_num = 0; addr_num < required_data_blocks_num; addr_num++) {
@@ -113,6 +115,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) {
             bytes_remaining_in_block :
             bytes_remaining_in_total;
 
+        // todo check this ... Might be why data is full of zeros...
         // When addr_num = 1, any of the two functions would change the value of *disk_handle 
         //memcpy(data + bytes_read, buffer, bytes_to_copy);
         //memset(data + bytes_read, buffer, bytes_to_copy);
@@ -210,7 +213,7 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
     if (len == 0)
         return 0;
     // Case 1.2 without Case 6
-    if (offset < 0 && (-offset) + len < target_inode->size)
+    if (_offset < 0 && (-_offset) + len < target_inode->size)
         return 0;
 
     
@@ -252,18 +255,54 @@ cleanup:
  * This function will write only inside an existing file
  */
 int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) {
+    int ret = 0;
+    uint8_t iobuffer[VDISK_SECTOR_SIZE];  // Will allow to read to and write from
 
-    // On a inode
-    // On va chercher toutes les addr de blocks de data (on utilise une fonction déjà faite)
-    // on a offset et len et on veut copier depuis data vers le fichier
-    // on copie jusqu'à ce qu'on ait copié assez de bytes (len)
-        // on calcule le premier block dans lequel on va
-        // la premiere fois, offset in the block c'est offset, ensuite c'est zero
+    // * no need to check inode's fields validity, it must be done by the caller fn
+
+    // todo might need to refactor in a function (rule of three)
+    // Computing the maximum number of DB we need.
+    // This also counts the blocks *before* offset.
+    uint32_t required_data_blocks_num = 1 + (offset + len - 1) / 1024;
+    uint32_t data_block_addresses[required_data_blocks_num];  //todo use malloc
+    get_file_block_addresses(inode, data_block_addresses, required_data_blocks_num);
     
-    // on lit le secteur, on change les bytes, on écrit le secteur, on sync
-    // Il faut aussi déterminer le minimum de bytes entre les bytes qu'il reste dans le block et les bytes qu'il reste pour satisfaire la requete pour savoir combien de bytes écrire.
+    uint32_t bytes_written = 0;
+    while (bytes_written < len) {
 
-    return 0;
+        // This is the absolute position within the file
+        uint32_t current_file_position = offset + bytes_written;
+        
+        // The block we're currently positioned and the byte in that block
+        uint32_t block_index = current_file_position / VDISK_SECTOR_SIZE;
+        uint32_t offset_within_block = current_file_position % VDISK_SECTOR_SIZE;
+
+        // Will copy the minimum between the two
+        uint32_t bytes_remaining_in_block = VDISK_SECTOR_SIZE - offset_within_block;
+        uint32_t bytes_remaining_in_total = len - bytes_written;
+        uint32_t bytes_to_write = (bytes_remaining_in_block < bytes_remaining_in_total) ?
+            bytes_remaining_in_block :
+            bytes_remaining_in_total;
+     
+        // Read, change, write, sync
+        vdisk_read(disk_handle, block_index, iobuffer);
+        //! errors
+
+        // Now we write in the buffer
+        memcpy(iobuffer + offset_within_block, data + bytes_written, bytes_to_write);
+
+        // Write back to the disk and sync
+        vdisk_write(disk_handle, block_index, iobuffer);
+        //! errors        
+        vdisk_sync(disk_handle);
+
+        // Updating variables for next iteration
+        bytes_written += bytes_to_write;
+        offset_within_block = 0;  // When block 0 is written, we write from the beginning
+    }
+
+    return bytes_written;
+
 }
 
 int write_out_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) {

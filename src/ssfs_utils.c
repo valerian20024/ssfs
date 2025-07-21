@@ -1,6 +1,8 @@
 //! this file aims at defining helpers functions used in several
 //! places in the code.
 
+// todo write file documentation
+// todo write lines not longer than 80 chars
 
 // The functions in this file often return 0 for false condition and 1 for true conditions. This allows to call them in the following way :
 // if (is_magic_ok()) { ... } which will effectively execute if
