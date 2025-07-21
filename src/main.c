@@ -1,3 +1,12 @@
+/*
+ * main.c
+ * ======
+ * 
+ * This file only calls test suites for now.
+ *
+ *  
+ */
+
 #include "ssfs_internal.h"
 #include "fs.h"
 #include <stdbool.h>

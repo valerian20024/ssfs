@@ -1,3 +1,13 @@
+/*
+ * tests.c
+ * =======
+ * 
+ * This file only serves testing purposes.
+ * It defines functions for different tests.
+ *
+ */
+
+
 #include "ssfs_internal.h"
 #include "fs.h"
 #include <stdbool.h>

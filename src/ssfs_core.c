@@ -1,14 +1,12 @@
 /*
-!This file does blabla
-
-
-Functions often use a `ret` variable and goto statements to handle error codes
-gracefully. In such a case, one need to declare any "variable" size object 
-before any goto statement, otherwise compiler will complain. This is the case
-for `buffer` which appears often in functions.
-
-*/
-
+ * ssfs_core.c
+ * ==============
+ * 
+ * Manages the core functionalities of the filesystem.
+ * That is formating, mounting, unmounting, and their respective helper 
+ * functions.
+ *  
+ */
 
 #include <stdint.h>
 #include <string.h>

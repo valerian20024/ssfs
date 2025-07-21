@@ -1,3 +1,14 @@
+/*
+ * ssfs_internal.h
+ * ===============
+ * 
+ * This file defines the data structures of the filesystem. It also declares
+ * the global variables used by the program as well as some common constants.
+ * All the prototypes of the functions written to perform operations are
+ * also written here.
+ *
+ */
+
 #ifndef SSFS_INTERNAL_H
 #define SSFS_INTERNAL_H
 
@@ -58,7 +69,7 @@ int is_inode_valid(int inodes_num, int max_inodes_num);
 int is_magic_ok(uint8_t * number);
 int _initialize_allocated_blocks();
 
-int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, int max_addresses);
+int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer);
 
 int erase_block_content(uint32_t block_num);
 

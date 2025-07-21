@@ -1,8 +1,13 @@
-//! this file aims at defining helpers functions used in several
-//! places in the code.
-
-// todo write file documentation
-// todo write lines not longer than 80 chars
+/*
+ * ssfs_utils.c
+ * ============
+ * 
+ * This file defines all the shared functions used in several places in the
+ * program.
+ * It also defines the MAGIC_NUMBER constant, that allows to identify the
+ * filesystem type.
+ *
+ */
 
 // The functions in this file often return 0 for false condition and 1 for true conditions. This allows to call them in the following way :
 // if (is_magic_ok()) { ... } which will effectively execute if

@@ -1,4 +1,12 @@
-//! this file does blablabla
+/*
+ * ssfs_inode.c
+ * ============
+ * 
+ * This file handles all operations on inodes.
+ * That is, getting statistics about a file, creating and deleting a file
+ * and all their local helper functions. 
+ * 
+ */
 
 #include <stdint.h>
 #include <string.h>
