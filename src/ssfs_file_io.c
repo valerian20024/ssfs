@@ -43,34 +43,32 @@
  * file holes within the specified read range.
  * @note Won't test file reachability if reading 0 bytes.
  */
-int read(int inode_num, uint8_t *data, int len, int offset) { // todo change _len for len and inversely (like in write)
+int read(int inode_num, uint8_t *data, int _len, int _offset) {
     int ret = 0;
-    
-    // Trivial empty reading
-    if (_len == 0) {
-        return 0;
-    }
-
     uint8_t buffer[VDISK_SECTOR_SIZE];
-    
-    uint32_t _len = (uint32_t) len;
-    uint32_t _offset = (uint32_t) offset;
+
+    uint32_t len = (uint32_t) _len;
+    uint32_t offset = (uint32_t) _offset;
+
+    // Trivial empty reading
+    if (len == 0)
+        return ret;
 
     // This buffer will hold the addresses of all the data blocks we need to look
     // It is initialized early so that we can use the goto instructions.
-    uint32_t required_data_blocks_num = 1 + (_offset + _len - 1) / 1024;
+    uint32_t required_data_blocks_num = 1 + (offset + len - 1) / 1024;
     printf("required_data_blocks_num : %d\n", required_data_blocks_num);
     uint32_t data_blocks_addresses[required_data_blocks_num];  //todo use malloc instead of the stack
     
     if (!is_mounted()) {
         ret = ssfs_EMOUNT;
-        goto cleanup;
+        goto error_management;
     }
 
     ret = vdisk_read(disk_handle, 0, buffer);
     if (ret != 0) {
         ret = vdisk_EACCESS;
-        goto cleanup;
+        goto error_management;
     }
     superblock_t *sb = (superblock_t *)buffer;
 
@@ -78,7 +76,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) { // todo change _le
     uint32_t total_inodes = sb->num_inode_blocks * 32;
     if (!is_inode_valid(inode_num, total_inodes)) {
         ret = ssfs_EALLOC;
-        goto cleanup;
+        goto error_management;
     }
     
     // Determining which precise inode we are looking for
@@ -90,7 +88,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) { // todo change _le
     ret = vdisk_read(disk_handle, 1 + target_inode_block, buffer);
     if (ret != 0) {
         ret = vdisk_EACCESS;
-        goto cleanup;
+        goto error_management;
     }
 
     inodes_block_t* ib = (inodes_block_t *)buffer;
@@ -99,23 +97,25 @@ int read(int inode_num, uint8_t *data, int len, int offset) { // todo change _le
     // Checking validity of inode
     if (!target_inode->valid) {
         ret = ssfs_EINODE;
-        goto cleanup;
+        goto error_management;
     }
 
     // Read request must be smaller than the file 
-    if (_offset + _len > target_inode->size) {
+    if (offset + len > target_inode->size) {
         ret = ssfs_EREAD;
-        goto cleanup;
+        goto error_management;
     }
 
-    // Let's get all the addresses of datablock sand fill in the buffer
-    get_file_block_addresses(target_inode, data_blocks_addresses);
+    // Let's get all the addresses of datablocks and fill in the buffer
+    ret = get_file_block_addresses(target_inode, data_blocks_addresses);
+    if (ret != 0)
+        goto error_management;
 
     uint32_t bytes_read = 0;
     // Targets the start of the bytes we need to copy in the block.
     // It starts with _offset for the first block, then it gets updated 
     // to zero to start at the beginning of further blocks.
-    uint32_t offset_within_block = _offset;  
+    uint32_t offset_within_block = offset;  
 
     // todo check when offset is greater than the size of one block (eg we start at 3rd block)
     // todo will need to use modulo right above ^^^ Also check get_file_block_addr()
@@ -124,7 +124,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) { // todo change _le
     // For each data block address
     for (uint32_t addr_num = 0; addr_num < required_data_blocks_num; addr_num++) {
 
-        if (bytes_read >= _len)
+        if (bytes_read >= len)
             break;
         // Put in buffer the data block content
         vdisk_read(disk_handle, data_blocks_addresses[addr_num], buffer);
@@ -134,7 +134,7 @@ int read(int inode_num, uint8_t *data, int len, int offset) { // todo change _le
         // 1. Bytes remaining in the block.
         // 2. Bytes remaining to fulfill the '_len' request.
         uint32_t bytes_remaining_in_block = VDISK_SECTOR_SIZE - offset_within_block;
-        uint32_t bytes_remaining_in_total = _len - bytes_read;
+        uint32_t bytes_remaining_in_total = len - bytes_read;
 
         uint32_t bytes_to_copy = (bytes_remaining_in_block < bytes_remaining_in_total) ?
             bytes_remaining_in_block :
@@ -150,12 +150,10 @@ int read(int inode_num, uint8_t *data, int len, int offset) { // todo change _le
         offset_within_block = 0;
     }
 
-    ret = (int)bytes_read;
+    return (int)bytes_read;
 
-
-cleanup:
-    if (ret < 0)
-        fprintf(stderr, "Error when reading (code %d).\n", ret);
+error_management:
+    fprintf(stderr, "Error when reading (code %d).\n", ret);
     return ret;
 }
 
@@ -164,23 +162,27 @@ cleanup:
  * by a file into address_buffer.
  * @return 0 on success. Writes the data into address_buffer.
  * @return Error codes on failure.
- * @note It assumes the address_buffer is correctly sized.
+ * @note It assumes the address_buffer is correctly sized. It assumes the caller
+ * function will deal with the error codes.
  */
 int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer) {
     int ret = 0;
-
     int addresses_collected = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
+    // Looking for direct addresses
     for (int d = 0; d < 4; d++) {
         if (inode->direct[d]) {
             address_buffer[addresses_collected++] = inode->direct[d];
         }
     }
 
+    // Looking for indirect addresses and related
     if (inode->indirect1) {
-        vdisk_read(disk_handle, inode->indirect1, buffer);
-        //! manage errors
+        ret = vdisk_read(disk_handle, inode->indirect1, buffer);
+        if (ret != 0)
+            return ret;
+
         uint32_t *indirect_ptrs = (uint32_t *)buffer;
 
         for (int db = 0; db < 256; db++) {
@@ -190,16 +192,21 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer) {
         }
     }
 
+    // Looking for double indirect addresses and related
     if (inode->indirect2) {
-        vdisk_read(disk_handle, inode->indirect2, buffer);
-        //! manage errprs
+        ret = vdisk_read(disk_handle, inode->indirect2, buffer);
+        if (ret != 0)
+            return ret;
+
         uint32_t *double_indirect_ptrs = (uint32_t *)buffer;
 
         uint8_t indirect_pointers_buffer[VDISK_SECTOR_SIZE];
         for (int ip = 0; ip < 256; ip++) {
             if (double_indirect_ptrs[ip]) {
-                vdisk_read(disk_handle, double_indirect_ptrs[ip], indirect_pointers_buffer);
-                //! errors
+                ret = vdisk_read(disk_handle, double_indirect_ptrs[ip], indirect_pointers_buffer);
+                if (ret != 0)
+                    return ret;
+
                 uint32_t *indirect_ptrs = (uint32_t *)indirect_pointers_buffer;
 
                 for (int db = 0; db < 256; db++) {
@@ -255,7 +262,7 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
     ret = vdisk_read(disk_handle, 1 + target_inode_block, buffer);
     if (ret != 0) {
         ret = vdisk_EACCESS;
-        goto cleanup;
+        goto error_management;
     }
 
     inodes_block_t* ib = (inodes_block_t *)buffer;
@@ -322,8 +329,8 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
 
     */
 
-    goto cleanup;
-cleanup:
+    goto error_management;
+error_management:
     return ret;
 }
 

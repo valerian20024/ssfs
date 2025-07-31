@@ -39,8 +39,10 @@ int format(char *disk_name, int inodes) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
-    if (is_mounted())
-        return ssfs_EMOUNT;
+    if (is_mounted()) {
+        ret = ssfs_EMOUNT;
+        goto error_management;
+    }
 
     if (!is_inode_positive(inodes))
         inodes = 1;
@@ -48,25 +50,23 @@ int format(char *disk_name, int inodes) {
     // Turning on the virtual disk
     DISK disk;
     ret = vdisk_on(disk_name, &disk);
-    if (ret != 0) 
-        goto cleanup; 
+    if (ret != 0)
+        goto error_management; 
     
     // Calculate how many 32-inodes blocks are needed.
     // Need at least 1 superblock + inode blocks + 1 data block
     uint32_t inode_blocks = (inodes + 31) / 32;
     if (disk.size_in_sectors < inode_blocks + 2) {
         ret = ssfs_ENOSPACE;
-        goto cleanup;
+        goto shutdown_disk;
     }
     
     // Clear all the sectors on disk
     memset(buffer, 0, VDISK_SECTOR_SIZE);
     for (uint32_t sector = 0; sector < disk.size_in_sectors; sector++) {
         ret = vdisk_write(&disk, sector, buffer);
-        if (ret != 0) {
-            ret = vdisk_EACCESS;
-            goto cleanup;
-        }
+        if (ret != 0)
+            goto shutdown_disk;
     }
 
     // Initialize and fill the superblock
@@ -79,14 +79,21 @@ int format(char *disk_name, int inodes) {
     memcpy(buffer, &sb, sizeof(superblock_t));
     ret = vdisk_write(&disk, 0, buffer);
     if (ret != 0)
-        goto cleanup;
+        goto shutdown_disk;
 
     // Terminate connection with virtual disk
     ret = vdisk_sync(&disk);
-cleanup:
+    if (ret != 0)
+        goto shutdown_disk;
+    
     vdisk_off(&disk);
-    if (ret != 0) 
-        fprintf(stderr, "Error when formatting (code %d).\n", ret);
+    return ret;
+
+shutdown_disk:
+    vdisk_off(&disk);
+
+error_management:
+    fprintf(stderr, "Error when formatting (code %d).\n", ret);
     return ret;
 }
 
@@ -113,62 +120,62 @@ int mount(char *disk_name) {
 
     if (is_mounted()) {
         ret = ssfs_EMOUNT;
-        goto cleanup_simple_error;
+        goto error_management_simple_error;
     }
 
     // Allocate the global disk pointer
     disk_handle = malloc(sizeof(DISK));
     if (disk_handle == NULL) {
         ret = ssfs_EDISKPTR;
-        goto cleanup_simple_error;
+        goto error_management_simple_error;
     }
     
     // Turning on the virtual disk
     ret = vdisk_on(disk_name, disk_handle);
     if (ret != 0) {
         ret = vdisk_EACCESS;
-        goto cleanup_deallocate_disk_handle;
+        goto error_management_deallocate_disk_handle;
     }
 
     // Reading superblock
     ret = vdisk_read(disk_handle, 0, buffer);
     if (ret != 0)
-        goto cleanup_shut_down_disk;
+        goto error_management_shut_down_disk;
     superblock_t *sb = (superblock_t *)buffer;
 
     // Check magic number
     if (!is_magic_ok(sb->magic)) {
         ret = ssfs_EMAGIC;
-        goto cleanup_shut_down_disk;
+        goto error_management_shut_down_disk;
     }
 
     // Allocating the block allocation bitmap
     allocated_blocks_handle = (bool *)calloc(sb->num_blocks, sizeof(bool));
     if (allocated_blocks_handle == NULL) {
         ret = ssfs_EALLOC;
-        goto cleanup_shut_down_disk;
+        goto error_management_shut_down_disk;
     }
 
     ret = _initialize_allocated_blocks();
     if (ret != 0)
-        goto cleanup_deallocated_blocks_handle;
+        goto error_management_deallocated_blocks_handle;
     
     // If everything went right, simply return.
-    goto cleanup_simple_error;
+    goto error_management_simple_error;
 
     // Else, we incrementaly free ressources.
-cleanup_deallocated_blocks_handle:
+error_management_deallocated_blocks_handle:
     free(allocated_blocks_handle);
     allocated_blocks_handle = NULL;
 
-cleanup_shut_down_disk:
+error_management_shut_down_disk:
     vdisk_off(disk_handle);
 
-cleanup_deallocate_disk_handle:
+error_management_deallocate_disk_handle:
     free(disk_handle);
     disk_handle = NULL;
 
-cleanup_simple_error:
+error_management_simple_error:
     if (ret != 0) {
         fprintf(stderr, "Error when mounting (code %d).\n", ret);
     }
@@ -192,7 +199,7 @@ int unmount() {
 
     if (!is_mounted()) {
         ret = ssfs_EMOUNT;
-        goto cleanup;
+        goto error_management;
     }
 
     vdisk_off(disk_handle);
@@ -201,7 +208,7 @@ int unmount() {
     free(allocated_blocks_handle);
     allocated_blocks_handle = NULL;
 
-cleanup:
+error_management:
     if (ret != 0)
         fprintf(stderr, "Error when unmounting (code %d).\n", ret);
     return ret;
