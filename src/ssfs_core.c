@@ -58,7 +58,7 @@ int format(char *disk_name, int inodes) {
     uint32_t inode_blocks = (inodes + 31) / 32;
     if (disk.size_in_sectors < inode_blocks + 2) {
         ret = ssfs_ENOSPACE;
-        goto shutdown_disk;
+        goto error_management_shutdown_disk;
     }
     
     // Clear all the sectors on disk
@@ -66,7 +66,7 @@ int format(char *disk_name, int inodes) {
     for (uint32_t sector = 0; sector < disk.size_in_sectors; sector++) {
         ret = vdisk_write(&disk, sector, buffer);
         if (ret != 0)
-            goto shutdown_disk;
+            goto error_management_shutdown_disk;
     }
 
     // Initialize and fill the superblock
@@ -79,17 +79,17 @@ int format(char *disk_name, int inodes) {
     memcpy(buffer, &sb, sizeof(superblock_t));
     ret = vdisk_write(&disk, 0, buffer);
     if (ret != 0)
-        goto shutdown_disk;
+        goto error_management_shutdown_disk;
 
     // Terminate connection with virtual disk
     ret = vdisk_sync(&disk);
     if (ret != 0)
-        goto shutdown_disk;
-    
+        goto error_management_shutdown_disk;
+
     vdisk_off(&disk);
     return ret;
 
-shutdown_disk:
+error_management_shutdown_disk:
     vdisk_off(&disk);
 
 error_management:
@@ -114,7 +114,6 @@ error_management:
  * volume is already mounted will result in an error.
  */
 int mount(char *disk_name) {
-    fprintf(stdout, "mount\n");
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -208,9 +207,10 @@ int unmount() {
     free(allocated_blocks_handle);
     allocated_blocks_handle = NULL;
 
+    return ret;
+
 error_management:
-    if (ret != 0)
-        fprintf(stderr, "Error when unmounting (code %d).\n", ret);
+    fprintf(stderr, "Error when unmounting (code %d).\n", ret);
     return ret;
 }
 
@@ -218,7 +218,7 @@ error_management:
  * @brief Initializes the block allocation bitmap based on existing file system usage.
  *
  * This internal procedure scan sthe file system to identify all blocks currently
- * in use (e.g., by the superblock, inodes, and existing data). It then updates
+ * in use (e.g. superblock, inodes, and existing data). It then updates
  * a global bitmap variable to reflect these used blocks.
  *
  * @return 0 on success.
@@ -240,9 +240,8 @@ int _initialize_allocated_blocks() {
 
     // Compute the number of system blocks and mark them.
     int system_blocks = 1 + sb->num_inode_blocks;
-    for (int block_num = 0; block_num < system_blocks; block_num++) {
+    for (int block_num = 0; block_num < system_blocks; block_num++)
         allocate_block(block_num);
-    }
 
     // Foreach inode block in the filesystem
     for (uint32_t block_num = 1; block_num < 1 + sb->num_inode_blocks; block_num++) {
@@ -250,15 +249,12 @@ int _initialize_allocated_blocks() {
         //! manage error must deallocate the direct blocks!
         inodes_block_t *ib = (inodes_block_t *)buffer;
         
-        // For each inode in an inode block, if inode has been allocated
+        // For each used inode in an inode block
         for (int i = 0; i < 32; i++) {
             if (ib[0][i].valid) {
-                // Allocate direct blocks
-                for (int d = 0; d < 4; d++) {
-                    if (ib[0][i].direct[d]) {
+                for (int d = 0; d < 4; d++)
+                    if (ib[0][i].direct[d])
                         allocate_block(ib[0][i].direct[d]);
-                    }
-                }
 
                 if (ib[0][i].indirect1)
                     allocate_indirect_block(ib[0][i].indirect1);

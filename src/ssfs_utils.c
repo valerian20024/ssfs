@@ -21,6 +21,7 @@
 #include "ssfs_internal.h"
 #include "error.h"
 
+// The filesystem's magic number. 
 const uint8_t MAGIC_NUMBER[16] = {
     0xf0, 0x55, 0x4c, 0x49,
     0x45, 0x47, 0x45, 0x49,
@@ -28,29 +29,52 @@ const uint8_t MAGIC_NUMBER[16] = {
     0x39, 0x34, 0x30, 0x0f 
 };
 
-// This function returns 0 is the disk is not mounted and 1 otherwise.
+
+/**
+ * @brief Checks if the disk has already been mounted.
+ * @return 0 if not mounted
+ * @return 1 if mounted
+ * 
+ */
 int is_mounted() {
     return disk_handle == NULL ? 0 : 1;
 }
 
-// This function returns 0 is the inode is negative, 1 if it's positive or zero.
+/**
+ * @brief This function checks if the inode number is positive.
+ * @return 0 if the inode is strictly negative.
+ * @return 1 if the inode is positive (or zero).
+ */
 int is_inode_positive(int inode_num) {
     return inode_num >= 0;
 }
 
-// This function returns 0 is the inode is not valid and 1 if it is. 
-// Valid means to be strictly positive and not overflow the maximum number of inodes in the filesystem.
+/**
+ * @brief This function operates common checks on the given inode value.
+ * 
+ * It will check if it's positive and if it doesn't goes out of bound of
+ * the filesystem.
+ * 
+ * @return 0 if the inode is not valid.
+ * @return 1 if the inode is valid.
+ * 
+ */
 int is_inode_valid(int inode_num, int max_inode_num) {
     return is_inode_positive(inode_num) && inode_num <= max_inode_num;
 }
 
-// This function returns 0 if the magic numbers don't correspond. Return 1 if they correspond.
+/**
+ * @brief Compares a given number to the magic number of the filesystem.
+ * @return 0 if the magic numbers don't correspond. 
+ * @return 1 if they correspond.
+ * 
+ */
 int is_magic_ok(uint8_t *number) {
     int ret = memcmp(number, MAGIC_NUMBER, sizeof(MAGIC_NUMBER));
     return ret == 0 ? 1 : 0;
 }
 
-
+//! wtf is this ????
 int erase_block_content(uint32_t block_num) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
