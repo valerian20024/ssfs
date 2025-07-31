@@ -9,10 +9,6 @@
  *
  */
 
-// The functions in this file often return 0 for false condition and 1 for true conditions. This allows to call them in the following way :
-// if (is_magic_ok()) { ... } which will effectively execute if
-// the magic number is good.
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
