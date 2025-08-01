@@ -72,44 +72,63 @@ void test1() {
 // Reading a file
 void test2() {
     fprintf(stdout, "%sStarting test2...%s\n", COLOR_GREEN, COLOR_RESET);
-    
-    fprintf(stdout, "%sAllocating ressources:%s\n", COLOR_BLUE, COLOR_RESET);
 
     int bytes_num = 2120318; 
+    fprintf(stdout, "%sAllocating ressources:%s %d\n", COLOR_BLUE, COLOR_RESET, bytes_num);
+
     char *disk_name = "disk_img.2";
     uint8_t *data = malloc(sizeof(2120318));
 
-    int inode = 1;
-    int len = 2120318;
-    int offset = 0;
+    fprintf(stdout, "%sDisk: %s%s\n", COLOR_BLUE, disk_name, COLOR_RESET);
 
-    fprintf(stdout, "Max number of bytes for data: %d\n", bytes_num);
-    fprintf(stdout, "len: %d\n", len);
-    fprintf(stdout, "offset: %d\n", len);
+    int inodes[]    = {1, 2, 3};
+    int lens[]      = {10, 100, 1000};
+    int offsets[]   = {0, 10, 100};
+
+    int num_inodes  = sizeof(inodes) / sizeof(inodes[0]);
+    int num_lens    = sizeof(lens) / sizeof(lens[0]);
+    int num_offsets = sizeof(offsets) / sizeof(offsets[0]);
 
     fprintf(stdout, "%sMounting:%s %s\n", COLOR_BLUE, COLOR_RESET, disk_name);
     mount(disk_name);
 
-    fprintf(stdout, "%sStats to find the size:%s\n", COLOR_BLUE, COLOR_RESET);
-    int size = stat(inode);
-    printf("size(%d) = %d\n", inode, size);
+    for (int i = 0; i < num_inodes; i++) {
+        for (int l = 0; l < num_lens; l++) {
+            for (int o = 0; o < num_offsets; o++) {
+                int inode = inodes[i];
+                int len = lens[l];
+                int offset = offsets[o];
 
-    int bytes = read(inode, data, len, offset);
-    
-    // In green when read >= 0, red when read negative bytes
-    if (bytes >= 0)
-        printf("%sSuccesfully read %d bytes%s\n", COLOR_GREEN, bytes, COLOR_RESET);
-    else
-        printf("%sError : %d%s\n", COLOR_RED, bytes, COLOR_RESET);
-    
-    printf("%sContent of data:%s\n", COLOR_BLUE, COLOR_RESET);
-    for (int i = 0; i < bytes; i++) {
-        printf("%02x ", data[i]);
-        if ((i + 1) % 16 == 0) printf("\n");
-        if ((i + 1) % 128 == 0) printf("\n");
+                fprintf(stdout, "%sReading...%s\n", COLOR_BLUE, COLOR_RESET);
+                fprintf(stdout, "inode: %d\n", inode);
+                fprintf(stdout, "len: %d\n", len);
+                fprintf(stdout, "offset: %d\n", offset);
+
+                fprintf(stdout, "%sStats to find the size:%s\n", COLOR_BLUE, COLOR_RESET);
+                int size = stat(inode);
+                printf("size(%d) = %d\n", inode, size);
+
+                int bytes = read(inode, data, len, offset);
+
+                // In green when read >= 0, red when read negative bytes
+                if (bytes >= 0)
+                    printf("%sSuccesfully read %d bytes%s\n", COLOR_GREEN, bytes, COLOR_RESET);
+                else
+                    printf("%sError : %d%s\n", COLOR_RED, bytes, COLOR_RESET);
+
+                
+                printf("%sContent of data:%s\n", COLOR_BLUE, COLOR_RESET);
+                for (int i = 0; i < bytes; i++) {
+                    printf("%02x ", data[i]);
+                    if ((i + 1) % 16 == 0) printf("\n");
+                    if ((i + 1) % 128 == 0) printf("\n");
+                }
+                printf("\n");
+                
+            }
+        }
     }
-    printf("\n");
-    
+
     fprintf(stdout, "%sUnmounting ...%s\n", COLOR_BLUE, COLOR_RESET);
     unmount();
 }
