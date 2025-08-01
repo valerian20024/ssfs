@@ -40,9 +40,12 @@ void test1() {
     mount(disk_name);
     
     // Seed the random number generator
-    srand((unsigned int)time(NULL));
-    int files_num = (rand() % (inodes - 1)) + 1; // at least 1, at most inodes-1
-    int delete_files_num = (rand() % files_num) + 1; // at least 1, at most files_num
+    //srand((unsigned int)time(NULL));
+    //int files_num = (rand() % (inodes - 1)) + 1; // at least 1, at most inodes-1
+    //int delete_files_num = (rand() % files_num) + 1; // at least 1, at most files_num
+
+    int files_num = 35;
+    int delete_files_num = 15;
 
     fprintf(stdout, "%sCreating:%s %d files\n", COLOR_BLUE, COLOR_RESET, files_num);
     for (int f = 0; f < files_num; f++) {
