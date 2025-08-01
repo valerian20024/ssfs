@@ -26,59 +26,67 @@ const char *COLOR_WHITE     = "\033[1;37m";
 
 // format, mount, create, stats, delete, create, unmount
 void test1() {
-    fprintf(stdout, "%sStarting test1...%s\n", COLOR_YELLOW, COLOR_RESET);
+    print_warning("Starting test1...", NULL);
 
     char *disk_name = "testdisk.img";
     int inodes = 200;
 
-    fprintf(stdout, "%sFormatting%s %s with at least %d inodes\n", COLOR_BLUE, COLOR_RESET, disk_name, inodes);
+    print_info("Formatting", "%s", disk_name);
+    print_info("Number of inodes", "%d", inodes);
     format(disk_name, inodes);
 
-    fprintf(stdout, "%sMounting...%s\n", COLOR_BLUE, COLOR_RESET);
+    print_info("Mounting...", NULL);
     mount(disk_name);
     
     srand((unsigned int)time(NULL));
     int files_num = (rand() % (inodes / 2 - 1)) + 1; // at least 1, at most inodes / 2 - 1
     int delete_files_num = (rand() % files_num) + 1; // at least 1, at most files_num
 
-    fprintf(stdout, "%sCreating:%s %d files\n", COLOR_BLUE, COLOR_RESET, files_num);
+    print_info("Number of file to be created", "%d", files_num);
     for (int f = 0; f < files_num; f++) {
         int file = create();
-        printf("created file with inode %d\n", file);
+        if (file >= 0)
+            printf("Created file with inode %d\n", file);
+        else
+            print_error("Error when creating file: ", "%d", file);
     }
 
-    fprintf(stdout, "%sStatistics:%s %d files\n", COLOR_BLUE, COLOR_RESET, files_num);
+    print_info("Number of statistics", "%d", files_num);
     for (int f = 0; f < files_num; f++) {
         int ret = stat(f);
-        printf("stat(%d): %d bytes\n", f, ret);
+        if (ret >= 0)
+            printf("Size(%d) -> %d bytes\n", f, ret);
+        else
+            print_error("Statistics error", "%d", ret);
     }
     
-    fprintf(stdout, "%sDeleting:%s %d files\n", COLOR_BLUE, COLOR_RESET, delete_files_num);
+    print_info("Number of files to be deleted", "%d", delete_files_num);
     for (int f = 0; f < delete_files_num; f++) {
         int ret = delete(f);
         if (ret == 0)
-            printf("Deleted file %d\n", f);
+            printf("Deleted file number: %d\n", f);
         else
-            printf("%sError when deleting file %d%s\n", COLOR_RED, f, COLOR_RESET);
+            print_error("Error when deleting file number", "%d", f);
     }
 
     files_num = (rand() % (inodes / 2 - 1)) + 1;
 
-    fprintf(stdout, "%sCreating:%s %d files\n", COLOR_BLUE, COLOR_RESET, files_num);
+    print_info("Number of file to be created", "%d", files_num);
     for (int f = 0; f < files_num; f++) {
         int file = create();
-        printf("Created file %d\n", file);
+        if (file >= 0)
+            printf("Created file with inode %d\n", file);
+        else
+            print_error("Error when creating file: ", "%d", file);
     }
 
-    fprintf(stdout, "%sUnmounting ...%s\n", COLOR_BLUE, COLOR_RESET);
+    print_info("Unmounting...", NULL);
     unmount();
-
-    fprintf(stdout, "\n");
 }
 
 // Reading some files with different lengths and offsets
 void test2() {
-    fprintf(stdout, "%sStarting test2...%s\n", COLOR_YELLOW, COLOR_RESET);
+    print_warning("Starting test2...", NULL);
 
     int bytes_num = 10000; 
     print_info("Allocating ressources", "%d", bytes_num);
@@ -103,24 +111,25 @@ void test2() {
                 int len = lens[l];
                 int offset = offsets[o];
 
-                fprintf(stdout, "%sReading...%s\n", COLOR_BLUE, COLOR_RESET);
+                print_info("Reading... ", NULL);
                 print_info("inode: ", "%d", inode);
                 print_info("len: ", "%d", len);
                 print_info("offset: ", "%d", offset);
 
-                fprintf(stdout, "%sStatistics...%s\n", COLOR_BLUE, COLOR_RESET);
+                print_info("Statistics... ", NULL);
                 int size = stat(inode);
-                printf("size(%d) = %d\n", inode, size);
+                if (size >= 0)
+                    printf("size(%d) = %d\n", inode, size);
+                else
+                    print_error("Error when reading", "%d", size);
 
                 int bytes = read(inode, data, len, offset);
-
-                // In green when read >= 0, red when read negative bytes
                 if (bytes >= 0)
                     print_success("Number of bytes successfully read", "%d", bytes);
                 else
                     print_error("Error when reading", "%d", bytes);
                 
-                printf("%sContent of data:%s\n", COLOR_BLUE, COLOR_RESET);
+                print_info("Data content", NULL);
                 for (int i = 0; i < bytes; i++) {
                     printf("%02x ", data[i]);
                     if ((i + 1) % 16 == 0) printf("\n");
@@ -142,46 +151,20 @@ void test2() {
  *
  * This function prints a message to stdout in the format:
  * <blue>label:<white>formatted_message<reset>\n
+ * If format is NULL or empty, prints just the label in blue.
  *
  * @param label The label to print (e.g., "Mounting").
- * @param format The format string for the message.
+ * @param format The format string for the message (can be NULL).
  * @param ... Variable arguments for the format string.
  * 
  * @note Example: print_info("Mounting", "%s", disk_name); where disk_name is a string.
+ * @note Example: print_info("A simple label...", NULL);
  * 
  */
 void print_info(const char *label, const char *format, ...) {
     va_list args;
     va_start(args, format);
-
-    fprintf(stdout, "%s%s:%s ", COLOR_BLUE, label, COLOR_WHITE);
-    vfprintf(stdout, format, args);
-    fprintf(stdout, "%s\n", COLOR_RESET);
-
-    va_end(args);
-}
-
-/**
- * @brief Prints a formatted message with colored label and content.
- *
- * This function prints a message to stdout in the format:
- * <red>label:formatted_message<reset>\n
- *
- * @param label The label to print.
- * @param format The format string for the message.
- * @param ... Variable arguments for the format string.
- * 
- * @note Example: print_error("Error", "%d", error_code); where error_code is an integer.
- * 
- */
-void print_error(const char *label, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-
-    fprintf(stdout, "%s%s: ", COLOR_RED, label);
-    vfprintf(stdout, format, args);
-    fprintf(stdout, "%s\n", COLOR_RESET);
-
+    pretty_print(COLOR_BLUE, label, format, args);
     va_end(args);
 }
 
@@ -195,19 +178,82 @@ void print_error(const char *label, const char *format, ...) {
  * @param format The format string for the message.
  * @param ... Variable arguments for the format string.
  * 
- * @note Example: print_success("Succesfully done: ", "%d", return_code); where return_code is an integer.
+ * @note Example: print_error("Error", "%d", error_code); where error_code is an integer.
+ * 
+ */
+void print_error(const char *label, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    pretty_print(COLOR_RED, label, format, args);
+    va_end(args);
+}
+
+/**
+ * @brief Prints a formatted message with colored label and content.
+ *
+ * This function prints a message to stdout in the format:
+ * <green>label:formatted_message<reset>\n
+ *
+ * @param label The label to print.
+ * @param format The format string for the message.
+ * @param ... Variable arguments for the format string.
+ * 
+ * @note Example: print_success("Success", "%d", return_code); where return_code is an integer.
  * 
  */
 void print_success(const char *label, const char *format, ...) {
     va_list args;
     va_start(args, format);
-
-    fprintf(stdout, "%s%s:%s ", COLOR_GREEN, label, COLOR_WHITE);
-    vfprintf(stdout, format, args);
-    fprintf(stdout, "%s\n", COLOR_RESET);
-
+    pretty_print(COLOR_GREEN, label, format, args);
     va_end(args);
 }
+
+
+/**
+ * @brief Prints a formatted message with colored label and content.
+ *
+ * This function prints a message to stdout in the format:
+ * <yellow>label:formatted_message<reset>\n
+ *
+ * @param label The label to print.
+ * @param format The format string for the message.
+ * @param ... Variable arguments for the format string.
+ * 
+ * @note Example: print_warning("Warning", "%d", return_code); where return_code is an integer.
+ * 
+ */
+void print_warning(const char *label, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    pretty_print(COLOR_YELLOW, label, format, args);
+    va_end(args);
+}
+
+/**
+ * @brief Prints a formatted message with colored label and content.
+ *
+ * This function prints a message to stdout in the format:
+ * <color>label:<white>formatted_message<reset>\n
+ *
+ * @param label The label to print.
+ * @param format The format string for the message.
+ * @param ... Variable arguments for the format string.
+ * 
+ * @note Typically called by higher functions such as print_info.
+ * 
+ */
+void pretty_print(const char* color, const char *label, const char *format, va_list args) {
+    if (format == NULL || format[0] == '\0') {
+        fprintf(stdout, "%s%s%s\n", color, label, COLOR_RESET);
+    } else {
+        fprintf(stdout, "%s%s:%s ", color, label, COLOR_WHITE);
+        vfprintf(stdout, format, args);
+        fprintf(stdout, "%s\n", COLOR_RESET);
+    }
+}
+
+
+
 
 
 

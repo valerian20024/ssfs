@@ -14,6 +14,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
+
 #include "vdisk.h"
 
 // #########################
@@ -62,9 +64,11 @@ extern const unsigned char MAGIC_NUMBER[];
 
 // test
 
+void pretty_print(const char* color, const char *label, const char *format, va_list args);
 void print_info(const char *label, const char *format, ...);
 void print_error(const char *label, const char *format, ...);
 void print_success(const char *label, const char *format, ...);
+void print_warning(const char *label, const char *format, ...);
 void test1();
 void test2();
 
