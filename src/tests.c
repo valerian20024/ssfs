@@ -141,7 +141,7 @@ void test2() {
         }
     }
 
-    fprintf(stdout, "%sUnmounting ...%s\n", COLOR_BLUE, COLOR_RESET);
+    print_info("Unmounting...", NULL)
     unmount();
 }
 
