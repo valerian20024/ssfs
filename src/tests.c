@@ -13,18 +13,16 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdarg.h>
 
-const char *COLOR_RESET = "\033[0m";
-const char *COLOR_RED = "\033[1;31m";
-const char *COLOR_GREEN = "\033[1;32m";
-const char *COLOR_YELLOW = "\033[1;33m";
-const char *COLOR_BLUE = "\033[1;34m";
-const char *COLOR_MAGENTA = "\033[1;35m";
-const char *COLOR_CYAN = "\033[1;36m";
-const char *COLOR_WHITE = "\033[1;37m";
-
-// To copy for output formatting:
-// fprintf(stdout, "%s %s\n", COLOR_BLUE, COLOR_RESET);
+const char *COLOR_RESET     = "\033[0m";
+const char *COLOR_RED       = "\033[1;31m";
+const char *COLOR_GREEN     = "\033[1;32m";
+const char *COLOR_YELLOW    = "\033[1;33m";
+const char *COLOR_BLUE      = "\033[1;34m";
+const char *COLOR_MAGENTA   = "\033[1;35m";
+const char *COLOR_CYAN      = "\033[1;36m";
+const char *COLOR_WHITE     = "\033[1;37m";
 
 // format, mount, create, stats, delete, create, unmount
 void test1() {
@@ -82,13 +80,9 @@ void test1() {
 void test2() {
     fprintf(stdout, "%sStarting test2...%s\n", COLOR_YELLOW, COLOR_RESET);
 
-    int bytes_num = 2120318; 
-    fprintf(stdout, "%sAllocating ressources:%s %d\n", COLOR_BLUE, COLOR_RESET, bytes_num);
-
-    char *disk_name = "disk_img.2";
-    uint8_t *data = malloc(sizeof(2120318));
-
-    fprintf(stdout, "%sDisk: %s%s\n", COLOR_BLUE, disk_name, COLOR_RESET);
+    int bytes_num = 10000; 
+    print_info("Allocating ressources", "%d", bytes_num);
+    uint8_t *data = malloc(sizeof(bytes_num));
 
     int inodes[]    = {1, 2, 3};
     int lens[]      = {10, 100, 1000};
@@ -98,7 +92,8 @@ void test2() {
     int num_lens    = sizeof(lens) / sizeof(lens[0]);
     int num_offsets = sizeof(offsets) / sizeof(offsets[0]);
 
-    fprintf(stdout, "%sMounting:%s %s\n", COLOR_BLUE, COLOR_RESET, disk_name);
+    char *disk_name = "disk_img.2";
+    print_info("Mounting", "%s", disk_name);
     mount(disk_name);
 
     for (int i = 0; i < num_inodes; i++) {
@@ -109,11 +104,11 @@ void test2() {
                 int offset = offsets[o];
 
                 fprintf(stdout, "%sReading...%s\n", COLOR_BLUE, COLOR_RESET);
-                fprintf(stdout, "inode: %s%d%s\n", COLOR_WHITE, inode, COLOR_RESET);
-                fprintf(stdout, "len: %s%d%s\n", COLOR_WHITE, len, COLOR_RESET);
-                fprintf(stdout, "offset: %s%d%s\n", COLOR_WHITE, offset, COLOR_RESET);
+                print_info("inode: ", "%d", inode);
+                print_info("len: ", "%d", len);
+                print_info("offset: ", "%d", offset);
 
-                fprintf(stdout, "%sStats to find the size:%s\n", COLOR_BLUE, COLOR_RESET);
+                fprintf(stdout, "%sStatistics...%s\n", COLOR_BLUE, COLOR_RESET);
                 int size = stat(inode);
                 printf("size(%d) = %d\n", inode, size);
 
@@ -121,10 +116,9 @@ void test2() {
 
                 // In green when read >= 0, red when read negative bytes
                 if (bytes >= 0)
-                    printf("%sSuccesfully read %d bytes%s\n", COLOR_GREEN, bytes, COLOR_RESET);
+                    print_success("Number of bytes successfully read", "%d", bytes);
                 else
-                    printf("%sError : %d%s\n", COLOR_RED, bytes, COLOR_RESET);
-
+                    print_error("Error when reading", "%d", bytes);
                 
                 printf("%sContent of data:%s\n", COLOR_BLUE, COLOR_RESET);
                 for (int i = 0; i < bytes; i++) {
@@ -141,3 +135,79 @@ void test2() {
     fprintf(stdout, "%sUnmounting ...%s\n", COLOR_BLUE, COLOR_RESET);
     unmount();
 }
+
+
+/**
+ * @brief Prints a formatted message with colored label and content.
+ *
+ * This function prints a message to stdout in the format:
+ * <blue>label:<white>formatted_message<reset>\n
+ *
+ * @param label The label to print (e.g., "Mounting").
+ * @param format The format string for the message.
+ * @param ... Variable arguments for the format string.
+ * 
+ * @note Example: print_info("Mounting", "%s", disk_name); where disk_name is a string.
+ * 
+ */
+void print_info(const char *label, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    fprintf(stdout, "%s%s:%s ", COLOR_BLUE, label, COLOR_WHITE);
+    vfprintf(stdout, format, args);
+    fprintf(stdout, "%s\n", COLOR_RESET);
+
+    va_end(args);
+}
+
+/**
+ * @brief Prints a formatted message with colored label and content.
+ *
+ * This function prints a message to stdout in the format:
+ * <red>label:formatted_message<reset>\n
+ *
+ * @param label The label to print.
+ * @param format The format string for the message.
+ * @param ... Variable arguments for the format string.
+ * 
+ * @note Example: print_error("Error", "%d", error_code); where error_code is an integer.
+ * 
+ */
+void print_error(const char *label, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    fprintf(stdout, "%s%s: ", COLOR_RED, label);
+    vfprintf(stdout, format, args);
+    fprintf(stdout, "%s\n", COLOR_RESET);
+
+    va_end(args);
+}
+
+/**
+ * @brief Prints a formatted message with colored label and content.
+ *
+ * This function prints a message to stdout in the format:
+ * <green>label:formatted_message<reset>\n
+ *
+ * @param label The label to print.
+ * @param format The format string for the message.
+ * @param ... Variable arguments for the format string.
+ * 
+ * @note Example: print_success("Succesfully done: ", "%d", return_code); where return_code is an integer.
+ * 
+ */
+void print_success(const char *label, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    fprintf(stdout, "%s%s:%s ", COLOR_GREEN, label, COLOR_WHITE);
+    vfprintf(stdout, format, args);
+    fprintf(stdout, "%s\n", COLOR_RESET);
+
+    va_end(args);
+}
+
+
+
