@@ -101,6 +101,7 @@ int create() {
 
     superblock_t *sb = (superblock_t *)buffer;
     uint32_t num_inode_blocks = sb->num_inode_blocks;
+    
     // Look for a free inode starting from block index 1.
     // Foreach inode_block in the filesystem.
     uint32_t inode_block_num = 0;

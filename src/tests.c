@@ -26,12 +26,12 @@ const char *COLOR_WHITE = "\033[1;37m";
 // To copy for output formatting:
 // fprintf(stdout, "%s %s\n", COLOR_BLUE, COLOR_RESET);
 
-// format, mount, create 10 files, give stats, delete 5, create 10, unmount
+// format, mount, create, stats, delete, create, unmount
 void test1() {
     fprintf(stdout, "%sStarting test1...%s\n", COLOR_YELLOW, COLOR_RESET);
 
     char *disk_name = "testdisk.img";
-    int inodes = 100;
+    int inodes = 200;
 
     fprintf(stdout, "%sFormatting%s %s with at least %d inodes\n", COLOR_BLUE, COLOR_RESET, disk_name, inodes);
     format(disk_name, inodes);
@@ -39,13 +39,9 @@ void test1() {
     fprintf(stdout, "%sMounting...%s\n", COLOR_BLUE, COLOR_RESET);
     mount(disk_name);
     
-    // Seed the random number generator
-    //srand((unsigned int)time(NULL));
-    //int files_num = (rand() % (inodes - 1)) + 1; // at least 1, at most inodes-1
-    //int delete_files_num = (rand() % files_num) + 1; // at least 1, at most files_num
-
-    int files_num = 35;
-    int delete_files_num = 15;
+    srand((unsigned int)time(NULL));
+    int files_num = (rand() % (inodes / 2 - 1)) + 1; // at least 1, at most inodes / 2 - 1
+    int delete_files_num = (rand() % files_num) + 1; // at least 1, at most files_num
 
     fprintf(stdout, "%sCreating:%s %d files\n", COLOR_BLUE, COLOR_RESET, files_num);
     for (int f = 0; f < files_num; f++) {
@@ -67,6 +63,8 @@ void test1() {
         else
             printf("%sError when deleting file %d%s\n", COLOR_RED, f, COLOR_RESET);
     }
+
+    files_num = (rand() % (inodes / 2 - 1)) + 1;
 
     fprintf(stdout, "%sCreating:%s %d files\n", COLOR_BLUE, COLOR_RESET, files_num);
     for (int f = 0; f < files_num; f++) {
