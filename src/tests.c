@@ -12,6 +12,7 @@
 #include "fs.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include <time.h>
 
 const char *COLOR_RESET = "\033[0m";
 const char *COLOR_RED = "\033[1;31m";
@@ -27,7 +28,7 @@ const char *COLOR_WHITE = "\033[1;37m";
 
 // format, mount, create 10 files, give stats, delete 5, create 10, unmount
 void test1() {
-    fprintf(stdout, "%sStarting test1...%s\n", COLOR_GREEN, COLOR_RESET);
+    fprintf(stdout, "%sStarting test1...%s\n", COLOR_YELLOW, COLOR_RESET);
 
     char *disk_name = "testdisk.img";
     int inodes = 100;
@@ -38,8 +39,10 @@ void test1() {
     fprintf(stdout, "%sMounting...%s\n", COLOR_BLUE, COLOR_RESET);
     mount(disk_name);
     
-    int files_num = 10;
-    int delete_files_num = 5;
+    // Seed the random number generator
+    srand((unsigned int)time(NULL));
+    int files_num = (rand() % (inodes - 1)) + 1; // at least 1, at most inodes-1
+    int delete_files_num = (rand() % files_num) + 1; // at least 1, at most files_num
 
     fprintf(stdout, "%sCreating:%s %d files\n", COLOR_BLUE, COLOR_RESET, files_num);
     for (int f = 0; f < files_num; f++) {
@@ -55,8 +58,11 @@ void test1() {
     
     fprintf(stdout, "%sDeleting:%s %d files\n", COLOR_BLUE, COLOR_RESET, delete_files_num);
     for (int f = 0; f < delete_files_num; f++) {
-        delete(f);
-        printf("Deleted file %d\n", f);
+        int ret = delete(f);
+        if (ret == 0)
+            printf("Deleted file %d\n", f);
+        else
+            printf("%sError when deleting file %d%s\n", COLOR_RED, f, COLOR_RESET);
     }
 
     fprintf(stdout, "%sCreating:%s %d files\n", COLOR_BLUE, COLOR_RESET, files_num);
@@ -67,11 +73,13 @@ void test1() {
 
     fprintf(stdout, "%sUnmounting ...%s\n", COLOR_BLUE, COLOR_RESET);
     unmount();
+
+    fprintf(stdout, "\n");
 }
 
-// Reading a file
+// Reading some files with different lengths and offsets
 void test2() {
-    fprintf(stdout, "%sStarting test2...%s\n", COLOR_GREEN, COLOR_RESET);
+    fprintf(stdout, "%sStarting test2...%s\n", COLOR_YELLOW, COLOR_RESET);
 
     int bytes_num = 2120318; 
     fprintf(stdout, "%sAllocating ressources:%s %d\n", COLOR_BLUE, COLOR_RESET, bytes_num);
@@ -100,9 +108,9 @@ void test2() {
                 int offset = offsets[o];
 
                 fprintf(stdout, "%sReading...%s\n", COLOR_BLUE, COLOR_RESET);
-                fprintf(stdout, "inode: %d\n", inode);
-                fprintf(stdout, "len: %d\n", len);
-                fprintf(stdout, "offset: %d\n", offset);
+                fprintf(stdout, "inode: %s%d%s\n", COLOR_WHITE, inode, COLOR_RESET);
+                fprintf(stdout, "len: %s%d%s\n", COLOR_WHITE, len, COLOR_RESET);
+                fprintf(stdout, "offset: %s%d%s\n", COLOR_WHITE, offset, COLOR_RESET);
 
                 fprintf(stdout, "%sStats to find the size:%s\n", COLOR_BLUE, COLOR_RESET);
                 int size = stat(inode);
