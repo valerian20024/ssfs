@@ -102,15 +102,13 @@ int create() {
     }
     superblock_t *sb = (superblock_t *)buffer;
     
-    // Look for a free inode. Starting at index 1.
-    // Foreach inode_block in the filesystem
+    // Look for a free inode starting from block index 1.
+    // Foreach inode_block in the filesystem.
     uint32_t inode_block_num = 0;
     for (uint32_t block_num = 1; block_num < 1 + sb->num_inode_blocks; block_num++) {
         ret = vdisk_read(disk_handle, block_num, buffer);
-        if (ret != 0) {
-            ret = vdisk_EACCESS;
+        if (ret != 0)
             goto error_management;
-        }
 
         inodes_block_t *inodes_block = (inodes_block_t *)buffer;
 
