@@ -62,7 +62,7 @@ $(OBJS_DIR)/%.o: %.c | check-libs
 # Linking into final executable.
 $(TARGET): $(OBJS) | check-libs
 	@echo $(COLOR_Y)"Linking $(TARGET)."$(COLOR_END)
-	@$(CC) $(OBJS) -o $@
+	@$(CC) $(OBJS) -o $@ -lbsd
 
 # +---------------+
 # | Other targets |
