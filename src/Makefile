@@ -46,10 +46,10 @@ all: $(TARGET)
 
 # Check libs dependencies 
 check-libs:
-	@echo $(COLOR_Y)"Checking for libbsd-dev..."$(COLOR_END)
-	@dpkg -l | grep -q libbsd-dev || { \
+	@echo $(COLOR_Y)"Checking for libbsd-dev..."$(COLOR_END);
+	dpkg -l | grep libbsd-dev || { \
 		echo "Installing libbsd-dev..."; \
-		sudo apt-get update && sudo apt-get install -y -qq libbsd-dev; \
+		sudo apt-get update && sudo apt-get install -y libbsd-dev; \
 	}
 	@echo "libbsd-dev is installed";
 
