@@ -47,11 +47,11 @@ all: $(TARGET)
 # Check libs dependencies 
 check-libs:
 	@echo $(COLOR_Y)"Checking for libbsd-dev..."$(COLOR_END);
-	dpkg -l | grep libbsd-dev || { \
+	@dpkg -l | grep -q libbsd-dev || { \
 		echo "Installing libbsd-dev..."; \
 		sudo apt-get update && sudo apt-get install -y libbsd-dev; \
 	}
-	@echo "libbsd-dev is installed";
+	@echo $(COLOR_G)"libbsd-dev is installed"$(COLOR_END);
 
 # Compile C files to object files.
 $(OBJS_DIR)/%.o: %.c | check-libs
