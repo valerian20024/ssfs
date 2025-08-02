@@ -11,6 +11,9 @@ FLAGS := -Wall -pedantic -std=c99 -Wextra -D_POSIX_SOURCE -lbsd -g -gdwarf-4
 # Final executable name.
 TARGET := fs_test
 
+# Submission archive name
+ARCHIVE := src.tar.gz
+
 # Directory containing all C header files.
 INCLUDE_DIR := include
 
@@ -30,6 +33,12 @@ COLOR_R 	:= "\e[31m"
 COLOR_G 	:= "\e[32m"
 COLOR_Y		:= "\e[33m"
 COLOR_END 	:= "\e[0m"
+
+# +--------------+
+# | Main targets |
+# +--------------+
+
+all: $(TARGET)
 
 # +----------------------+
 # | Compilation of files |
@@ -55,13 +64,11 @@ $(TARGET): $(OBJS) | check-libs
 	@echo $(COLOR_Y)"Linking $(TARGET)."$(COLOR_END)
 	@$(CC) $(OBJS) -o $@
 
-# +--------------+
-# | Main targets |
-# +--------------+
+# +---------------+
+# | Other targets |
+# +---------------+
 
 .PHONY: all debug clean build check-libs
-
-all: $(TARGET)
 
 # Will recreate directories for object files and print informations.
 debug:
@@ -77,19 +84,20 @@ debug:
 
 clean:
 	@rm -f $(TARGET)
+	@rm -rf $(ARCHIVE)
 	@rm -rf $(OBJS_DIR)
 	@rm -rf $(BUILD_DIR)
-	@echo $(COLOR_R)"Cleaned:" $(TARGET) $(OBJS_DIR)/ $(BUILD_DIR)/$(COLOR_END)
+	@echo $(COLOR_R)"Cleaned:" $(TARGET) $(ARCHIVE) $(OBJS_DIR)/ $(BUILD_DIR)/$(COLOR_END)
 
-# Create a submission archive with source files, Makefile, include, and vdisk directories
+# Create a submission archive with source files, Makefile, include, and vdisk directories inside a src/ folder
 build:
-	@echo $(COLOR_Y)"Creating submission archive src.tar.gz"$(COLOR_END)
-	@rm -rf $(BUILD_DIR)
-	@mkdir -p $(BUILD_DIR)
-	@cp -r $(SRCS) $(BUILD_DIR)
-	@cp Makefile $(BUILD_DIR)
-	@cp -r include $(BUILD_DIR)
-	@cp -r vdisk $(BUILD_DIR)
-	@tar -czf src.tar.gz -C $(BUILD_DIR) .
-	@rm -rf $(BUILD_DIR)
+	@echo $(COLOR_Y)"Creating submission archive src.tar.gz with src/ folder"$(COLOR_END)
+	@rm -rf build
+	@mkdir -p build/src
+	@cp -r *.c build/src/
+	@cp Makefile build/src/
+	@cp -r include build/src/
+	@cp -r vdisk build/src/
+	@tar -czf $(ARCHIVE) -C build src
+	@rm -rf build
 	@echo $(COLOR_G)"Submission archive src.tar.gz created successfully"$(COLOR_END)
