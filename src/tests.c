@@ -92,7 +92,7 @@ void test2() {
     print_info("Allocating ressources", "%d", bytes_num);
     uint8_t *data = malloc(sizeof(bytes_num));
 
-    int inodes[]    = {1, 2, 3};
+    int inodes[]    = {0, 1, 2};
     int lens[]      = {10, 100, 1000};
     int offsets[]   = {0, 10, 100};
 
@@ -111,7 +111,7 @@ void test2() {
                 int len = lens[l];
                 int offset = offsets[o];
 
-                print_info("Reading... ", NULL);
+                print_info("Reading parameters", NULL);
                 print_info("inode: ", "%d", inode);
                 print_info("len: ", "%d", len);
                 print_info("offset: ", "%d", offset);
@@ -141,7 +141,8 @@ void test2() {
         }
     }
 
-    print_info("Unmounting...", NULL)
+    print_info("Unmounting...", NULL);
+    free(data);
     unmount();
 }
 

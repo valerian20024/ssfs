@@ -48,29 +48,28 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
     uint32_t len = (uint32_t) _len;
     uint32_t offset = (uint32_t) _offset;
 
-    // Trivial empty reading
-    if (len == 0)
-        return ret;
-
     // This buffer will hold the addresses of all the data blocks we need to look
     // It is initialized early so that we can use the goto instructions.
     uint32_t required_data_blocks_num = 1 + (offset + len - 1) / 1024;
     printf("required_data_blocks_num : %d\n", required_data_blocks_num);
     uint32_t data_blocks_addresses[required_data_blocks_num];  //todo use malloc instead of the stack
-    
+
+    // Trivial empty reading
+    if (len == 0)
+        return ret;
+
     if (!is_mounted()) {
         ret = ssfs_EMOUNT;
         goto error_management;
     }
 
     ret = vdisk_read(disk_handle, 0, buffer);
-    if (ret != 0) {
-        ret = vdisk_EACCESS;
+    if (ret != 0)
         goto error_management;
-    }
+
     superblock_t *sb = (superblock_t *)buffer;
 
-    // Checking validity of the function parameter
+    // Checking validity of the function parameters
     uint32_t total_inodes = sb->num_inode_blocks * 32;
     if (!is_inode_valid(inode_num, total_inodes)) {
         ret = ssfs_EALLOC;
@@ -81,13 +80,11 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
     uint32_t target_inode_block = inode_num / 32;
     uint32_t target_inode_num   = inode_num % 32;
 
-    printf("inode blocks\n target_inode_block : %d\n target_inode_num : %d\n", target_inode_block, target_inode_num);
+    printf("target_inode_block : %d\ntarget_inode_num : %d\n", target_inode_block, target_inode_num);
 
     ret = vdisk_read(disk_handle, 1 + target_inode_block, buffer);
-    if (ret != 0) {
-        ret = vdisk_EACCESS;
+    if (ret != 0)
         goto error_management;
-    }
 
     inodes_block_t* ib = (inodes_block_t *)buffer;
     inode_t *target_inode = &ib[0][target_inode_num];
@@ -140,8 +137,7 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
 
         // todo check this ... Might be why data is full of zeros...
         // When addr_num = 1, any of the two functions would change the value of *disk_handle 
-        //memcpy(data + bytes_read, buffer, bytes_to_copy);
-        //memset(data + bytes_read, buffer, bytes_to_copy);
+        memcpy(data + bytes_read, buffer, bytes_to_copy);
 
         bytes_read += bytes_to_copy;
 
@@ -369,8 +365,9 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
             bytes_remaining_in_total;
      
         // Read, change, write, sync
-        vdisk_read(disk_handle, data_block_addresses[block_index], iobuffer);
-        //! errors
+        ret = vdisk_read(disk_handle, data_block_addresses[block_index], iobuffer);
+        if (ret != 0)
+            goto error_management;
 
         // Now we write in the buffer
         memcpy(iobuffer + offset_within_block, data + bytes_written, bytes_to_write);
@@ -387,6 +384,9 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
 
     free(data_block_addresses);
     return bytes_written;
+
+error_management:
+    return ret;
 }
 
 /**
@@ -398,6 +398,10 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
  * - Change the size of the file in the inode.
  */
 int write_out_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) {
+    (void)inode;
+    (void)data;
+    (void)len;
+    (void)offset;
     return 0;
 }
 

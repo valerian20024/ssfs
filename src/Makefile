@@ -6,7 +6,7 @@
 CC := gcc
 
 # Install libbsd-dev prior to compiling
-FLAGS := -Wall -pedantic -std=c99 -Wextra -D_POSIX_SOURCE -lbsd -g
+FLAGS := -Wall -pedantic -std=c99 -Wextra -D_POSIX_SOURCE -lbsd -g -gdwarf-4
 
 # Final executable name.
 TARGET := fs_test
@@ -22,6 +22,9 @@ SRCS := $(shell find $(SRCS_DIR) -name "*.c")
 OBJS_DIR := obj
 OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))  # .file.c => ./obj/file.o
 
+# Temporary directory where source code is dumped to create the submission archive. 
+BUILD_DIR := build
+
 # Defining ANSI colors for clearer output
 COLOR_R 	:= "\e[31m"
 COLOR_G 	:= "\e[32m"
@@ -32,14 +35,23 @@ COLOR_END 	:= "\e[0m"
 # | Compilation of files |
 # +----------------------+
 
+# Check libs dependencies 
+check-libs:
+	@echo $(COLOR_Y)"Checking for libbsd-dev..."$(COLOR_END)
+	@dpkg -l | grep -q libbsd-dev || { \
+		echo "Installing libbsd-dev..."; \
+		sudo apt-get update && sudo apt-get install -y -qq libbsd-dev; \
+	}
+	@echo "libbsd-dev is installed";
+
 # Compile C files to object files.
-$(OBJS_DIR)/%.o: %.c
+$(OBJS_DIR)/%.o: %.c | check-libs
 	@mkdir -p $(@D)
 	@echo $(COLOR_Y)"Compiling $< -> $@"$(COLOR_END)
 	@$(CC) $(FLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
 # Linking into final executable.
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) | check-libs
 	@echo $(COLOR_Y)"Linking $(TARGET)."$(COLOR_END)
 	@$(CC) $(OBJS) -o $@
 
@@ -47,7 +59,7 @@ $(TARGET): $(OBJS)
 # | Main targets |
 # +--------------+
 
-.PHONY: all debug clean
+.PHONY: all debug clean build check-libs
 
 all: $(TARGET)
 
@@ -66,4 +78,18 @@ debug:
 clean:
 	@rm -f $(TARGET)
 	@rm -rf $(OBJS_DIR)
-	@echo $(COLOR_R)"Cleaned obj/, target."$(COLOR_END)
+	@rm -rf $(BUILD_DIR)
+	@echo $(COLOR_R)"Cleaned:" $(TARGET) $(OBJS_DIR)/ $(BUILD_DIR)/$(COLOR_END)
+
+# Create a submission archive with source files, Makefile, include, and vdisk directories
+build:
+	@echo $(COLOR_Y)"Creating submission archive src.tar.gz"$(COLOR_END)
+	@rm -rf $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)
+	@cp -r $(SRCS) $(BUILD_DIR)
+	@cp Makefile $(BUILD_DIR)
+	@cp -r include $(BUILD_DIR)
+	@cp -r vdisk $(BUILD_DIR)
+	@tar -czf src.tar.gz -C $(BUILD_DIR) .
+	@rm -rf $(BUILD_DIR)
+	@echo $(COLOR_G)"Submission archive src.tar.gz created successfully"$(COLOR_END)

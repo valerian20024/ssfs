@@ -79,6 +79,8 @@ int _initialize_allocated_blocks();
 // ssfs_file_io
 
 int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer);
+int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset);
+int write_out_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset);
 
 // ssfs_utils 
 
