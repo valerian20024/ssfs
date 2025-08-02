@@ -197,7 +197,7 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer) {
         uint8_t indirect_pointers_buffer[VDISK_SECTOR_SIZE];
         for (int ip = 0; ip < 256; ip++) {
             if (double_indirect_ptrs[ip]) {
-                ret = vdisk_read(disk_handle, double_indirect_ptrs[ip], indirect_pointers_buffer);
+                ret = vdisk_read(disk_handle, double_indirect_ptrs[ip], indirect_pointers_buffer);  // !pb here
                 if (ret != 0)
                     return ret;
 
