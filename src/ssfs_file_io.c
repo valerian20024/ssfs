@@ -41,16 +41,6 @@
  * file holes within the specified read range.
  * @note Won't test file reachability if reading 0 bytes.
  */
-
-
-/*
-
-!The calculation required_data_blocks_num = 1 + (offset + len - 1) / 1024 assumes you need enough blocks to cover offset + len. This is correct for determining the maximum number of blocks needed but could overestimate if the file size is smaller than offset + len. You should check the file size (likely stored in target_inode->size) to avoid accessing invalid blocks.
-!The function doesn’t check if offset is negative or if offset + len exceeds the file size, which could lead to reading beyond the file’s data. This is noted in your comment about handling reads larger than the file size, but it’s not implemented.
-
-
-*/
-
 int read(int inode_num, uint8_t *data, int _len, int _offset) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -374,8 +364,9 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
         memcpy(buffer + offset_within_block, data + bytes_written, bytes_to_write);
 
         // Write back to the disk and sync
-        vdisk_write(disk_handle, data_block_addresses[block_index], buffer);
-        //! errors        
+        ret = vdisk_write(disk_handle, data_block_addresses[block_index], buffer);
+        if (ret != 0)
+            goto error_management;
         vdisk_sync(disk_handle);
 
         // Updating variables for next iteration

@@ -146,6 +146,77 @@ void test2() {
     unmount();
 }
 
+void test3() {
+    print_warning("Starting test3...", NULL);
+
+    int bytes_num = 10000;
+    print_info("Allocating resources", "%d", bytes_num);
+    uint8_t *data = malloc(bytes_num);
+    if (!data) {
+        print_error("Memory allocation failed", NULL);
+        return;
+    }
+
+    // Fill data with a pattern
+    for (int i = 0; i < bytes_num; i++) {
+        data[i] = (uint8_t)(i % 256);
+    }
+
+    int inode = 0;
+    int lens[] = {10, 100, 1000, 4096};
+    int offsets[] = {0, 5, 50, 100};
+    int num_lens = sizeof(lens) / sizeof(lens[0]);
+    int num_offsets = sizeof(offsets) / sizeof(offsets[0]);
+
+    char *disk_name = "disk_img.3";
+    print_info("Mounting", "%s", disk_name);
+    mount(disk_name);
+
+    // Create a file to write to
+    inode = create();
+    if (inode < 0) {
+        print_error("Failed to create file", "%d", inode);
+        free(data);
+        unmount();
+        return;
+    }
+    print_success("Created file with inode", "%d", inode);
+
+    for (int l = 0; l < num_lens; l++) {
+        for (int o = 0; o < num_offsets; o++) {
+            int len = lens[l];
+            int offset = offsets[o];
+
+            print_info("Writing parameters", NULL);
+            print_info("inode: ", "%d", inode);
+            print_info("len: ", "%d", len);
+            print_info("offset: ", "%d", offset);
+
+            int bytes = write(inode, data, len, offset);
+            if (bytes >= 0)
+                print_success("Number of bytes successfully written", "%d", bytes);
+            else
+                print_error("Error when writing", "%d", bytes);
+
+            // Optionally, read back and verify
+            uint8_t *verify = malloc(len);
+            if (verify) {
+                int read_bytes = read(inode, verify, len, offset);
+                if (read_bytes == len && memcmp(data, verify, len) == 0) {
+                    print_success("Verification passed", NULL);
+                } else {
+                    print_error("Verification failed", NULL);
+                }
+                free(verify);
+            }
+        }
+    }
+
+    print_info("Unmounting...", NULL);
+    free(data);
+    unmount();
+}
+
 
 /**
  * @brief Prints a formatted message with colored label and content.
