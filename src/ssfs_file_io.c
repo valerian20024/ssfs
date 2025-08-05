@@ -141,7 +141,6 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
         memcpy(data + bytes_read, buffer + offset_within_block, bytes_to_read);
 
         bytes_read += bytes_to_read;
-        offset_within_block = 0;
     }
 
     free(data_block_addresses);
