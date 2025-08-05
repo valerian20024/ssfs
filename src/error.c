@@ -13,3 +13,4 @@ const int ssfs_EALLOC       = -11;
 const int ssfs_EINODE       = -12;
 const int ssfs_E3RDPARTY    = -13;
 const int ssfs_EREAD        = -14;
+const int ssfs_EINVAL       = -15;
