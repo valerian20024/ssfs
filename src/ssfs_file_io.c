@@ -108,7 +108,7 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
     }
     ret = get_file_block_addresses(target_inode, data_block_addresses);
     if (ret != 0)
-        goto error_management;
+        goto error_management_free;
 
     // Read data blocks
     uint32_t bytes_read = 0;
@@ -126,7 +126,7 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
         
         ret = vdisk_read(disk_handle, data_block_addresses[block_index], buffer);
         if (ret != 0)
-            goto error_management;
+            goto error_management_free;
 
         memcpy(data + bytes_read, buffer + offset_within_block, bytes_to_read);
 
@@ -136,8 +136,10 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
     free(data_block_addresses);
     return (int)bytes_read;
 
-error_management:
+error_management_free:
     free(data_block_addresses);
+
+error_management:
     fprintf(stderr, "Error when reading (code %d).\n", ret);
     return ret;
 }

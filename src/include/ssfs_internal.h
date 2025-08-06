@@ -71,6 +71,7 @@ void print_success(const char *label, const char *format, ...);
 void print_warning(const char *label, const char *format, ...);
 void test1();
 void test2();
+void test3();
 
 // ssfs_core
 

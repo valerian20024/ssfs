@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdarg.h>
+#include <string.h>
 
 const char *COLOR_RESET     = "\033[0m";
 const char *COLOR_RED       = "\033[1;31m";
@@ -131,9 +132,9 @@ void test2() {
                 
                 print_info("Data content", NULL);
                 for (int i = 0; i < bytes; i++) {
-                    printf("%02x ", data[i]);
-                    if ((i + 1) % 16 == 0) printf("\n");
-                    if ((i + 1) % 128 == 0) printf("\n");
+                    printf("%02x", data[i]);
+                    //if ((i + 1) % 16 == 0) printf("\n");
+                    //if ((i + 1) % 128 == 0) printf("\n");
                 }
                 printf("\n");
                 

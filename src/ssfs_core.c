@@ -159,8 +159,7 @@ int mount(char *disk_name) {
     if (ret != 0)
         goto error_management_deallocated_blocks_handle;
     
-    // If everything went right, simply return.
-    goto error_management_simple_error;
+    return ret;
 
     // Else, we incrementaly free ressources.
 error_management_deallocated_blocks_handle:
@@ -175,9 +174,7 @@ error_management_deallocate_disk_handle:
     disk_handle = NULL;
 
 error_management_simple_error:
-    if (ret != 0) {
-        fprintf(stderr, "Error when mounting (code %d).\n", ret);
-    }
+    fprintf(stderr, "Error when mounting (code %d).\n", ret);
     return ret;
 }
 
