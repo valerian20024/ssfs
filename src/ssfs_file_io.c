@@ -334,7 +334,10 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
     // Computing the total number of DB for the file
     uint32_t required_data_blocks_num = (inode->size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
     uint32_t *data_block_addresses = malloc(required_data_blocks_num * sizeof(uint32_t));
-    //! error
+    if (data_block_addresses == NULL) {
+        ret = ssfs_EALLOC;
+        goto error_management;
+    }
 
     get_file_block_addresses(inode, data_block_addresses);
     
@@ -360,7 +363,7 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
         // Read, change, write, sync
         ret = vdisk_read(disk_handle, data_block_addresses[block_index], buffer);
         if (ret != 0)
-            goto error_management;
+            goto error_management_free;
 
         // Now we write in the buffer
         memcpy(buffer + offset_within_block, data + bytes_written, bytes_to_write);
@@ -368,7 +371,7 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
         // Write back to the disk and sync
         ret = vdisk_write(disk_handle, data_block_addresses[block_index], buffer);
         if (ret != 0)
-            goto error_management;
+            goto error_management_free;
         vdisk_sync(disk_handle);
 
         // Updating variables for next iteration
@@ -379,8 +382,10 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
     free(data_block_addresses);
     return bytes_written;
 
-error_management:
+error_management_free:
     free(data_block_addresses);
+
+error_management:
     return ret;
 }
 
