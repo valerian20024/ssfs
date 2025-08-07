@@ -91,15 +91,15 @@ void test2() {
 
     int bytes_num = 10000; 
     print_info("Allocating ressources", "%d", bytes_num);
-    uint8_t *data = malloc(sizeof(bytes_num));
+    uint8_t *data = malloc(bytes_num);
 
-    int inodes[]    = {0, 1, 2};
-    int lens[]      = {10, 100, 1000};
-    int offsets[]   = {0, 10, 100};
+    int inodes[]    = {2, 0, 1};
+    int lens[]      = {10, 20, 50, 100};
+    int offsets[]   = {0, 10, 20, 25, 50, 100};
 
-    int num_inodes  = sizeof(inodes) / sizeof(inodes[0]);
-    int num_lens    = sizeof(lens) / sizeof(lens[0]);
-    int num_offsets = sizeof(offsets) / sizeof(offsets[0]);
+    int num_inodes  = sizeof(inodes)    / sizeof(inodes[0]);
+    int num_lens    = sizeof(lens)      / sizeof(lens[0]);
+    int num_offsets = sizeof(offsets)   / sizeof(offsets[0]);
 
     char *disk_name = "disk_img.2";
     print_info("Mounting", "%s", disk_name);
@@ -133,8 +133,8 @@ void test2() {
                 print_info("Data content", NULL);
                 for (int i = 0; i < bytes; i++) {
                     printf("%02x", data[i]);
-                    //if ((i + 1) % 16 == 0) printf("\n");
-                    //if ((i + 1) % 128 == 0) printf("\n");
+                    if ((i + 1) % 16 == 0) printf("\n");
+                    if ((i + 1) % 128 == 0) printf("\n");
                 }
                 printf("\n");
                 

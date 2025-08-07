@@ -199,10 +199,15 @@ int unmount() {
     }
 
     vdisk_off(disk_handle);
+    printf("vdisk_off(disk_handle)\n");
     free(disk_handle);
+    printf("free(disk_handle)\n");
     disk_handle = NULL;
+    printf("disk_handle = NULL;\n");
     free(allocated_blocks_handle);
+    printf("free(allocated_blocks_handle);\n");
     allocated_blocks_handle = NULL;
+    printf("allocated_blocks_handle = NULL;\n");
 
     return ret;
 

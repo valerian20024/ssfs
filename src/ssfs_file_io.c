@@ -42,6 +42,12 @@
  * @note Won't test file reachability if reading 0 bytes.
  */
 int read(int inode_num, uint8_t *data, int _len, int _offset) {
+    fprintf(stdout, "BEGINNING OF READ\n");
+    fprintf(stdout, "disk_handle->sector_size = %d\n", disk_handle->sector_size);
+    fprintf(stdout, "disk_handle->size_in_sectors = %d\n", disk_handle->size_in_sectors);
+    fprintf(stdout, "disk_handle->name = %s\n", disk_handle->name);
+    fprintf(stdout, "disk_handle->fp = %p\n", (void*)disk_handle->fp);
+
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -110,12 +116,26 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
     if (ret != 0)
         goto error_management_free;
 
+    /*fprintf(stdout, "\n");
+
+    fprintf(stdout, "BEGINNING OF LOOP\n");
+    fprintf(stdout, "disk_handle->sector_size = %d\n", disk_handle->sector_size);
+    fprintf(stdout, "disk_handle->size_in_sectors = %d\n", disk_handle->size_in_sectors);
+    fprintf(stdout, "disk_handle->name = %s\n", disk_handle->name);
+    fprintf(stdout, "disk_handle->fp = %p\n", (void*)disk_handle->fp);
+*/
     // Read data blocks
     uint32_t bytes_read = 0;
     while (bytes_read < len) {
         uint32_t absolute_file_position = offset + bytes_read;
-        uint32_t block_index = absolute_file_position / VDISK_SECTOR_SIZE;
-        uint32_t offset_within_block = absolute_file_position % VDISK_SECTOR_SIZE;
+        uint32_t block_index            = absolute_file_position / VDISK_SECTOR_SIZE;
+        uint32_t offset_within_block    = absolute_file_position % VDISK_SECTOR_SIZE;       
+        /*
+        fprintf(stdout, "bytes_read = %d\n", bytes_read);
+        fprintf(stdout, "absolute_file_position = %d\n", absolute_file_position);
+        fprintf(stdout, "block_index = %d\n", block_index);
+        fprintf(stdout, "offset_within_block = %d\n", offset_within_block);
+        */
 
         // Will copy the minimum between the remaining bytes in the block and in total
         uint32_t bytes_remaining_in_block = VDISK_SECTOR_SIZE - offset_within_block;
@@ -123,13 +143,40 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
         uint32_t bytes_to_read = (bytes_remaining_in_block < bytes_remaining_in_total) ?
             bytes_remaining_in_block :
             bytes_remaining_in_total;
-        
+        /*
+        fprintf(stdout, "bytes_remaining_in_block = %d\n", bytes_remaining_in_block);
+        fprintf(stdout, "bytes_remaining_in_total = %d\n", bytes_remaining_in_total);
+        fprintf(stdout, "bytes_to_read = %d\n", bytes_to_read);
+
+        fprintf(stdout, "data_block_addresses[block_index] = %d\n", data_block_addresses[block_index]);
+*/
         ret = vdisk_read(disk_handle, data_block_addresses[block_index], buffer);
-        if (ret != 0)
+        if (ret != 0) {
+            fprintf(stderr, "ERROR WHEN VDISK READ\n");
             goto error_management_free;
+        }
 
-        memcpy(data + bytes_read, buffer + offset_within_block, bytes_to_read);
+        //memcpy(data + bytes_read, buffer + offset_within_block, bytes_to_read);
 
+        fprintf(stdout, "\n");
+
+        for (uint32_t i = 0; i < bytes_to_read; i++) {
+            data[i] = buffer[offset_within_block + i];
+/*
+            fprintf(stdout, "i = %d\n", i);
+            fprintf(stdout, "offset_within_block + i = %d\n", offset_within_block + i);
+            fprintf(stdout, "buffer[offset_within_block + i] = %02x\n", buffer[offset_within_block + i]);
+            fprintf(stdout, "data[i] = %02x\n", data[i]);
+            */
+        }
+
+/*
+        fprintf(stdout, "END OF LOOP\n");
+        fprintf(stdout, "disk_handle->sector_size = %d\n", disk_handle->sector_size);
+        fprintf(stdout, "disk_handle->size_in_sectors = %d\n", disk_handle->size_in_sectors);
+        fprintf(stdout, "disk_handle->name = %s\n", disk_handle->name);
+        fprintf(stdout, "disk_handle->fp = %p\n", (void*)disk_handle->fp);
+*/
         bytes_read += bytes_to_read;
     }
 
