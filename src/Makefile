@@ -28,6 +28,9 @@ OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))  # .file.c => ./obj/
 # Temporary directory where source code is dumped to create the submission archive. 
 BUILD_DIR := build
 
+# Directory used to put the output of the program execution
+TEST_DIR := test
+
 # Defining ANSI colors for clearer output
 COLOR_R 	:= "\e[31m"
 COLOR_G 	:= "\e[32m"
@@ -87,7 +90,13 @@ clean:
 	@rm -rf $(ARCHIVE)
 	@rm -rf $(OBJS_DIR)
 	@rm -rf $(BUILD_DIR)
-	@echo $(COLOR_R)"Cleaned:" $(TARGET) $(ARCHIVE) $(OBJS_DIR)/ $(BUILD_DIR)/$(COLOR_END)
+	@rm -rf $(TEST_DIR)
+	@echo $(COLOR_R)"Cleaned:" $(COLOR_END)
+	@echo "  $(TARGET)"
+	@echo "  $(ARCHIVE)"
+	@echo "  $(OBJS_DIR)/"
+	@echo "  $(BUILD_DIR)/"
+	@echo "  $(TEST_DIR)/"
 
 # Create a submission archive with source files, Makefile, include, and vdisk directories inside a src/ folder
 build:

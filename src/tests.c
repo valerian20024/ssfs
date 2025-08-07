@@ -93,9 +93,9 @@ void test2() {
     print_info("Allocating ressources", "%d", bytes_num);
     uint8_t *data = malloc(bytes_num);
 
-    int inodes[]    = {2};
-    int lens[]      = {50000};
-    int offsets[]   = {0};
+    int inodes[]    = {1};
+    int lens[]      = {128};
+    int offsets[]   = {0, 128 - 16, 256 - 16, 384 - 16, 512 - 16};
 
     int num_inodes  = sizeof(inodes)    / sizeof(inodes[0]);
     int num_lens    = sizeof(lens)      / sizeof(lens[0]);
