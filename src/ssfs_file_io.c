@@ -152,13 +152,16 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
 
         fprintf(stdout, "\n");
 
-        for (uint32_t i = bytes_read; i < bytes_to_read; i++) {
+        /*
+        for (uint32_t i = 0; i <  + bytes_to_read; i++) {
             data[i] = buffer[offset_within_block + i];
-///*
+
             fprintf(stdout, "offset_within_block + i = %d\n", offset_within_block + i);
             fprintf(stdout, "data[%d] = %02x\n", i, data[i]);
-//*/          
-        }
+          
+        }*/
+
+        memcpy(data + bytes_read, buffer + offset_within_block, bytes_to_read);
 ///*
         fprintf(stdout, "END OF LOOP\n");
         fprintf(stdout, "disk_handle->sector_size = %d\n", disk_handle->sector_size);
