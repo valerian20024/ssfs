@@ -68,7 +68,7 @@ $(TARGET): $(OBJS) | check-libs
 # | Other targets |
 # +---------------+
 
-.PHONY: all debug clean build check-libs
+.PHONY: all debug clean build check-libs show
 
 # Will recreate directories for object files and print informations.
 debug:
@@ -101,3 +101,10 @@ build:
 	@tar -czf $(ARCHIVE) -C build src
 	@rm -rf build
 	@echo $(COLOR_G)"Submission archive src.tar.gz created successfully"$(COLOR_END)
+
+show:
+	@mkdir -p test
+	@TIME=$$(date +"%Y%m%d_%H%M%S"); \
+	echo $(COLOR_Y)"Running $(TARGET), output to ./test/output_$${TIME}.txt"$(COLOR_END); \
+	./$(TARGET) > ./test/output_$${TIME}.txt 2>&1; \
+	echo $(COLOR_G)"Output saved to ./test/output_$${TIME}.txt"$(COLOR_END)

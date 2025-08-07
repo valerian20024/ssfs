@@ -89,13 +89,13 @@ void test1() {
 void test2() {
     print_warning("Starting test2...", NULL);
 
-    int bytes_num = 100000; 
+    int bytes_num = 50000; 
     print_info("Allocating ressources", "%d", bytes_num);
     uint8_t *data = malloc(bytes_num);
 
-    int inodes[]    = {0};
-    int lens[]      = {10000};
-    int offsets[]   = {0, 1000};
+    int inodes[]    = {2};
+    int lens[]      = {50000};
+    int offsets[]   = {0};
 
     int num_inodes  = sizeof(inodes)    / sizeof(inodes[0]);
     int num_lens    = sizeof(lens)      / sizeof(lens[0]);
