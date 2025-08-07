@@ -112,30 +112,29 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
         ret = ssfs_EALLOC;
         goto error_management;
     }
-    ret = get_file_block_addresses(target_inode, data_block_addresses);
+    ret = get_file_block_addresses(target_inode, data_block_addresses, required_data_blocks_num);
     if (ret != 0)
         goto error_management_free;
 
-    /*fprintf(stdout, "\n");
+    fprintf(stdout, "\n");
 
     fprintf(stdout, "BEGINNING OF LOOP\n");
     fprintf(stdout, "disk_handle->sector_size = %d\n", disk_handle->sector_size);
     fprintf(stdout, "disk_handle->size_in_sectors = %d\n", disk_handle->size_in_sectors);
     fprintf(stdout, "disk_handle->name = %s\n", disk_handle->name);
     fprintf(stdout, "disk_handle->fp = %p\n", (void*)disk_handle->fp);
-*/
+
     // Read data blocks
     uint32_t bytes_read = 0;
     while (bytes_read < len) {
         uint32_t absolute_file_position = offset + bytes_read;
         uint32_t block_index            = absolute_file_position / VDISK_SECTOR_SIZE;
         uint32_t offset_within_block    = absolute_file_position % VDISK_SECTOR_SIZE;       
-        /*
+        
         fprintf(stdout, "bytes_read = %d\n", bytes_read);
         fprintf(stdout, "absolute_file_position = %d\n", absolute_file_position);
         fprintf(stdout, "block_index = %d\n", block_index);
         fprintf(stdout, "offset_within_block = %d\n", offset_within_block);
-        */
 
         // Will copy the minimum between the remaining bytes in the block and in total
         uint32_t bytes_remaining_in_block = VDISK_SECTOR_SIZE - offset_within_block;
@@ -143,40 +142,37 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
         uint32_t bytes_to_read = (bytes_remaining_in_block < bytes_remaining_in_total) ?
             bytes_remaining_in_block :
             bytes_remaining_in_total;
-        /*
+        
         fprintf(stdout, "bytes_remaining_in_block = %d\n", bytes_remaining_in_block);
         fprintf(stdout, "bytes_remaining_in_total = %d\n", bytes_remaining_in_total);
         fprintf(stdout, "bytes_to_read = %d\n", bytes_to_read);
 
         fprintf(stdout, "data_block_addresses[block_index] = %d\n", data_block_addresses[block_index]);
-*/
+
         ret = vdisk_read(disk_handle, data_block_addresses[block_index], buffer);
         if (ret != 0) {
             fprintf(stderr, "ERROR WHEN VDISK READ\n");
             goto error_management_free;
         }
 
-        //memcpy(data + bytes_read, buffer + offset_within_block, bytes_to_read);
-
         fprintf(stdout, "\n");
 
         for (uint32_t i = 0; i < bytes_to_read; i++) {
             data[i] = buffer[offset_within_block + i];
-/*
+
             fprintf(stdout, "i = %d\n", i);
             fprintf(stdout, "offset_within_block + i = %d\n", offset_within_block + i);
             fprintf(stdout, "buffer[offset_within_block + i] = %02x\n", buffer[offset_within_block + i]);
             fprintf(stdout, "data[i] = %02x\n", data[i]);
-            */
+            
         }
 
-/*
         fprintf(stdout, "END OF LOOP\n");
         fprintf(stdout, "disk_handle->sector_size = %d\n", disk_handle->sector_size);
         fprintf(stdout, "disk_handle->size_in_sectors = %d\n", disk_handle->size_in_sectors);
         fprintf(stdout, "disk_handle->name = %s\n", disk_handle->name);
         fprintf(stdout, "disk_handle->fp = %p\n", (void*)disk_handle->fp);
-*/
+
         bytes_read += bytes_to_read;
     }
 
@@ -199,35 +195,35 @@ error_management:
  * @note It assumes the address_buffer is correctly sized. It assumes the caller
  * function will deal with the error codes.
  */
-int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer) {
+int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t max_addresses) {
     int ret = 0;
-    int addresses_collected = 0;
+    uint32_t addresses_collected = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
     // Looking for direct addresses
-    for (int d = 0; d < 4; d++) {
+    for (uint32_t d = 0; d < 4 && addresses_collected < max_addresses; d++) {
         if (inode->direct[d]) {
             address_buffer[addresses_collected++] = inode->direct[d];
         }
     }
 
     // Looking for indirect addresses and related
-    if (inode->indirect1) {
+    if (inode->indirect1 && addresses_collected < max_addresses) {
         ret = vdisk_read(disk_handle, inode->indirect1, buffer);
         if (ret != 0)
             return ret;
 
         uint32_t *indirect_ptrs = (uint32_t *)buffer;
 
-        for (int db = 0; db < 256; db++) {
-            if (indirect_ptrs[db]) {
+        for (uint32_t db = 0; db < 256; db++) {
+            if (indirect_ptrs[db] && addresses_collected < max_addresses) {
                 address_buffer[addresses_collected++] = indirect_ptrs[db];
             }
         }
     }
 
     // Looking for double indirect addresses and related
-    if (inode->indirect2) {
+    if (inode->indirect2 && addresses_collected < max_addresses) {
         ret = vdisk_read(disk_handle, inode->indirect2, buffer);
         if (ret != 0)
             return ret;
@@ -235,15 +231,15 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer) {
         uint32_t *double_indirect_ptrs = (uint32_t *)buffer;
 
         uint8_t indirect_pointers_buffer[VDISK_SECTOR_SIZE];
-        for (int ip = 0; ip < 256; ip++) {
+        for (uint32_t ip = 0; ip < 256 && addresses_collected < max_addresses; ip++) {
             if (double_indirect_ptrs[ip]) {
-                ret = vdisk_read(disk_handle, double_indirect_ptrs[ip], indirect_pointers_buffer);  // !pb here
+                ret = vdisk_read(disk_handle, double_indirect_ptrs[ip], indirect_pointers_buffer);
                 if (ret != 0)
                     return ret;
 
                 uint32_t *indirect_ptrs = (uint32_t *)indirect_pointers_buffer;
 
-                for (int db = 0; db < 256; db++) {
+                for (uint32_t db = 0; db < 256 && addresses_collected < max_addresses; db++) {
                     if (indirect_ptrs[db]) {
                         address_buffer[addresses_collected++] = indirect_ptrs[db];
                     }
@@ -386,7 +382,7 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
         goto error_management;
     }
 
-    get_file_block_addresses(inode, data_block_addresses);
+    get_file_block_addresses(inode, data_block_addresses, required_data_blocks_num);
     
     uint32_t bytes_written = 0;
     while (bytes_written < len) {
