@@ -42,13 +42,13 @@
  * @note Won't test file reachability if reading 0 bytes.
  */
 int read(int inode_num, uint8_t *data, int _len, int _offset) {
-/*
+///*
     fprintf(stdout, "BEGINNING OF READ\n");
     fprintf(stdout, "disk_handle->sector_size = %d\n", disk_handle->sector_size);
     fprintf(stdout, "disk_handle->size_in_sectors = %d\n", disk_handle->size_in_sectors);
     fprintf(stdout, "disk_handle->name = %s\n", disk_handle->name);
     fprintf(stdout, "disk_handle->fp = %p\n", (void*)disk_handle->fp);
-*/
+///*
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -152,20 +152,20 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
 
         fprintf(stdout, "\n");
 
-        for (uint32_t i = 0; i < bytes_to_read; i++) {
+        for (uint32_t i = bytes_read; i < bytes_to_read; i++) {
             data[i] = buffer[offset_within_block + i];
 ///*
             fprintf(stdout, "offset_within_block + i = %d\n", offset_within_block + i);
             fprintf(stdout, "data[%d] = %02x\n", i, data[i]);
 //*/          
         }
-/*
+///*
         fprintf(stdout, "END OF LOOP\n");
         fprintf(stdout, "disk_handle->sector_size = %d\n", disk_handle->sector_size);
         fprintf(stdout, "disk_handle->size_in_sectors = %d\n", disk_handle->size_in_sectors);
         fprintf(stdout, "disk_handle->name = %s\n", disk_handle->name);
         fprintf(stdout, "disk_handle->fp = %p\n", (void*)disk_handle->fp);
-*/
+//*/
         bytes_read += bytes_to_read;
     }
 
