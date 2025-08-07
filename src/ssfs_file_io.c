@@ -125,24 +125,24 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
         uint32_t absolute_file_position = offset + bytes_read;
         uint32_t block_index            = absolute_file_position / VDISK_SECTOR_SIZE;
         uint32_t offset_within_block    = absolute_file_position % VDISK_SECTOR_SIZE;       
-/*
+///*
         fprintf(stdout, "bytes_read = %d\n", bytes_read);
         fprintf(stdout, "absolute_file_position = %d\n", absolute_file_position);
         fprintf(stdout, "block_index = %d\n", block_index);
         fprintf(stdout, "offset_within_block = %d\n", offset_within_block);
-*/
+//*/
         // Will copy the minimum between the remaining bytes in the block and in total
         uint32_t bytes_remaining_in_block = VDISK_SECTOR_SIZE - offset_within_block;
         uint32_t bytes_remaining_in_total = len - bytes_read;
         uint32_t bytes_to_read = (bytes_remaining_in_block < bytes_remaining_in_total) ?
             bytes_remaining_in_block :
             bytes_remaining_in_total;
-/*
+///*
         fprintf(stdout, "bytes_remaining_in_block = %d\n", bytes_remaining_in_block);
         fprintf(stdout, "bytes_remaining_in_total = %d\n", bytes_remaining_in_total);
-        fprintf(stdout, "bytes_to_read = %d\n", bytes_to_read);
+        fprintf(stdout, "  => bytes_to_read = %d\n", bytes_to_read);
         fprintf(stdout, "data_block_addresses[block_index] = %d\n", data_block_addresses[block_index]);
-*/
+//*/
 
         ret = vdisk_read(disk_handle, data_block_addresses[block_index], buffer);
         if (ret != 0) {
@@ -154,12 +154,10 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
 
         for (uint32_t i = 0; i < bytes_to_read; i++) {
             data[i] = buffer[offset_within_block + i];
-/*
-            fprintf(stdout, "i = %d\n", i);
+///*
             fprintf(stdout, "offset_within_block + i = %d\n", offset_within_block + i);
-            fprintf(stdout, "buffer[offset_within_block + i] = %02x\n", buffer[offset_within_block + i]);
-            fprintf(stdout, "data[i] = %02x\n", data[i]);
-*/          
+            fprintf(stdout, "data[%d] = %02x\n", i, data[i]);
+//*/          
         }
 /*
         fprintf(stdout, "END OF LOOP\n");

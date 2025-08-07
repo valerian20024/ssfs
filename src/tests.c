@@ -94,7 +94,7 @@ void test2() {
     uint8_t *data = malloc(bytes_num);
 
     int inodes[]    = {1};
-    int lens[]      = {128};
+    int lens[]      = {128 + 16};
     int offsets[]   = {0, 128 - 16, 256 - 16, 384 - 16, 512 - 16};
 
     int num_inodes  = sizeof(inodes)    / sizeof(inodes[0]);
