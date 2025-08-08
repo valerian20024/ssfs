@@ -89,7 +89,7 @@ void test1() {
 void test2() {
     print_warning("Starting test2...", NULL);
 
-    int bytes_num = 189;
+    int bytes_num = 10;
     print_info("Allocating ressources", "%d", bytes_num);
     uint8_t *data = malloc(bytes_num);
 

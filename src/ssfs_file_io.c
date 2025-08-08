@@ -113,7 +113,7 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
         ret = ssfs_EALLOC;
         goto error_management;
     }
-    ret = get_file_block_addresses(target_inode, data_block_addresses);
+    ret = get_file_block_addresses(target_inode, data_block_addresses, required_data_blocks_num);
     if (ret != 0)
         goto error_management_free;
 
@@ -182,6 +182,7 @@ error_management:
  * @note It assumes the address_buffer is correctly sized. It assumes the caller
  * function will deal with the error codes.
  */
+/*
 int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer) {
     int ret = 0;
     uint32_t addresses_collected = 0;
@@ -237,7 +238,8 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer) {
 
     return ret;
 }
-/*
+*/
+
 int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t max_addresses) {
     int ret = 0;
     uint32_t addresses_collected = 0;
@@ -293,7 +295,7 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t 
 
     return ret;
 }
-*/
+
 
 /**
  * @brief Writes a specified number of bytes to a file at a given offset.
