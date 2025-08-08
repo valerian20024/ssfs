@@ -90,9 +90,10 @@ void test2() {
     print_warning("Starting test2...", NULL);
 
     int bytes_num = 2120318;
-    //int bytes_num = 100000; 
     print_info("Allocating ressources", "%d", bytes_num);
     uint8_t *data = malloc(bytes_num);
+
+    
 
     int inodes[]    = {1};
     int lens[]      = {bytes_num};
@@ -106,12 +107,23 @@ void test2() {
     print_info("Mounting", "%s", disk_name);
     mount(disk_name);
 
+
     for (int i = 0; i < num_inodes; i++) {
         for (int l = 0; l < num_lens; l++) {
             for (int o = 0; o < num_offsets; o++) {
                 int inode = inodes[i];
                 int len = lens[l];
                 int offset = offsets[o];
+
+                // Output file for hex dump of the file content
+                char file_name[128];
+                snprintf(file_name, sizeof(file_name), "output/output_inode_%d_len_%d_offset_%d.txt", inode, len, offset);
+                FILE *hex_output = fopen(file_name, "w");
+                if (hex_output == NULL) {
+                    print_error("Failed to open output file", "%s", file_name);
+                    free(data);
+                    return;
+                }
 
                 print_info("Reading parameters", NULL);
                 print_info("inode: ", "%d", inode);
@@ -131,14 +143,10 @@ void test2() {
                 else
                     print_error("Error when reading", "%d", bytes);
                 
-                print_info("Data content", NULL);
+                print_info("Writing data to", "%s", file_name);
                 for (int i = 0; i < bytes; i++) {
-                    printf("%02x", data[i]);
-                    if ((i + 1) % 64 == 0) printf("\n");
-                    if ((i + 1) % 1024 == 0) printf("\n");
+                    fprintf(hex_output, "%02x", data[i]);
                 }
-                printf("\n");
-                
             }
         }
     }
