@@ -74,7 +74,8 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
     ret = vdisk_read(disk_handle, 0, buffer);
     if (ret != 0)
         goto error_management;
-    superblock_t *sb = (superblock_t *)buffer;
+    
+    superblock_t *sb = (superblock_t *)buffer;  
 
     // Checking inode validity
     uint32_t total_inodes = sb->num_inode_blocks * 32;
@@ -182,64 +183,6 @@ error_management:
  * @note It assumes the address_buffer is correctly sized. It assumes the caller
  * function will deal with the error codes.
  */
-/*
-int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer) {
-    int ret = 0;
-    uint32_t addresses_collected = 0;
-    uint8_t buffer[VDISK_SECTOR_SIZE];
-
-    // Looking for direct addresses
-    for (uint32_t d = 0; d < 4; d++) {
-        if (inode->direct[d]) {
-            address_buffer[addresses_collected++] = inode->direct[d];
-        }
-    }
-
-    // Looking for indirect addresses and related
-    if (inode->indirect1) {
-        ret = vdisk_read(disk_handle, inode->indirect1, buffer);
-        if (ret != 0)
-            return ret;
-
-        uint32_t *indirect_ptrs = (uint32_t *)buffer;
-
-        for (uint32_t db = 0; db < 256; db++) {
-            if (indirect_ptrs[db]) {
-                address_buffer[addresses_collected++] = indirect_ptrs[db];
-            }
-        }
-    }
-
-    // Looking for double indirect addresses and related
-    if (inode->indirect2) {
-        ret = vdisk_read(disk_handle, inode->indirect2, buffer);
-        if (ret != 0)
-            return ret;
-
-        uint32_t *double_indirect_ptrs = (uint32_t *)buffer;
-
-        uint8_t indirect_pointers_buffer[VDISK_SECTOR_SIZE];
-        for (uint32_t ip = 0; ip < 256; ip++) {
-            if (double_indirect_ptrs[ip]) {
-                ret = vdisk_read(disk_handle, double_indirect_ptrs[ip], indirect_pointers_buffer);
-                if (ret != 0)
-                    return ret;
-
-                uint32_t *indirect_ptrs = (uint32_t *)indirect_pointers_buffer;
-
-                for (uint32_t db = 0; db < 256; db++) {
-                    if (indirect_ptrs[db]) {
-                        address_buffer[addresses_collected++] = indirect_ptrs[db];
-                    }
-                }
-            }
-        }
-    }
-
-    return ret;
-}
-*/
-
 int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t max_addresses) {
     int ret = 0;
     uint32_t addresses_collected = 0;
