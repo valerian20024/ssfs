@@ -1,5 +1,8 @@
 # SSFS (Simple and Secure FileSystem)
 
+[![HitCount](https://hits.dwyl.com/valerian20024/ssfs.svg?style=flat-square)](http://hits.dwyl.com/valerian20024/ssfs)
+
+
 This project is held by Valérian Wislez in the scope of the course *2024-2025-INFO0940-A-a* **Operating systems 30h Th, 6h Pr, 30h Proj.** and beyond ... *(hopefully some day I'll make a more efficient version of SSFS part of my own OS)*
 
 It also serves as an exercise to practice better C, with a focus on error management, code structure and documentation.
