@@ -42,6 +42,7 @@ COLOR_END 	:= "\e[0m"
 # +--------------+
 
 all: $(TARGET)
+	@mkdir -p $(OUTPUT_DIR)
 
 # +----------------------+
 # | Compilation of files |
@@ -112,7 +113,10 @@ build:
 	@echo $(COLOR_G)"Submission archive src.tar.gz created successfully"$(COLOR_END)
 
 show:
-	@mkdir -p $(OUTPUT_DIR)
-	@TIME=$$(date +"%Y%m%d_%H%M%S"); \
-	./$(TARGET) > ./$(OUTPUT_DIR)/make_show_$${TIME}.txt 2>&1; \
-	echo $(COLOR_G)"Output saved to ./$(OUTPUT_DIR)/make_show_$${TIME}.txt"$(COLOR_END)
+	@echo $(COLOR_Y)"Restoring raw files from hex dumps in $(OUTPUT_DIR)"$(COLOR_END)
+	for f in $(OUTPUT_DIR)/*.hex; do \
+		[ -e "$$f" ] || continue; \
+		outfile=$${f%.hex}.raw; \
+		xxd -r -p "$$f" "$$outfile"; \
+		echo "Restored $$outfile from $$f"; \
+	done
