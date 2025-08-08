@@ -89,11 +89,11 @@ void test1() {
 void test2() {
     print_warning("Starting test2...", NULL);
 
-    int bytes_num = 10;
+    int bytes_num = 14558;
     print_info("Allocating ressources", "%d", bytes_num);
     uint8_t *data = malloc(bytes_num);
 
-    int inodes[]    = {1};
+    int inodes[]    = {4};
     int lens[]      = {bytes_num};
     int offsets[]   = {0};
 
@@ -101,7 +101,7 @@ void test2() {
     int num_lens    = sizeof(lens)      / sizeof(lens[0]);
     int num_offsets = sizeof(offsets)   / sizeof(offsets[0]);
 
-    char *disk_name = "disk_img.2";
+    char *disk_name = "disk_img.3.bin";
     print_info("Mounting", "%s", disk_name);
     mount(disk_name);
 
@@ -150,7 +150,7 @@ void test2() {
                 
                 print_info("Writing data to", "%s", file_name);
                 for (int i = 0; i < bytes; i++) {
-                    fprintf(stdout, "data[%d] = %02x\n", i, data[i]);
+                    fprintf(stdout, "%02x", data[i]);
                     fprintf(hex_output, "%02x", data[i]);
                 }
                 fprintf(stdout, "\n");
