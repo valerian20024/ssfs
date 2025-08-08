@@ -8,3 +8,5 @@ src/testdisk.bak
 src/testdisk.img
 src/src.tar.gz
 test/
+output
+disk_img.3
