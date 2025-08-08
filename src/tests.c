@@ -115,7 +115,7 @@ void test2() {
                 int len = lens[l];
                 int offset = offsets[o];
 
-                // Output file for hex dump of the file content
+                // Creating output file for hex dump of the content
                 char file_name[128];
                 snprintf(file_name, sizeof(file_name), "output/output_inode_%d_len_%d_offset_%d.txt", inode, len, offset);
                 FILE *hex_output = fopen(file_name, "w");

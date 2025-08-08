@@ -29,7 +29,7 @@ OBJS := $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))  # .file.c => ./obj/
 BUILD_DIR := build
 
 # Directory used to put the output of the program execution
-TEST_DIR := test
+OUTPUT_DIR := output
 
 # Defining ANSI colors for clearer output
 COLOR_R 	:= "\e[31m"
@@ -112,8 +112,7 @@ build:
 	@echo $(COLOR_G)"Submission archive src.tar.gz created successfully"$(COLOR_END)
 
 show:
-	@mkdir -p test
+	@mkdir -p $(OUTPUT_DIR)
 	@TIME=$$(date +"%Y%m%d_%H%M%S"); \
-	echo $(COLOR_Y)"Running $(TARGET), output to ./test/output_$${TIME}.txt"$(COLOR_END); \
-	./$(TARGET) > ./test/output_$${TIME}.txt 2>&1; \
-	echo $(COLOR_G)"Output saved to ./test/output_$${TIME}.txt"$(COLOR_END)
+	./$(TARGET) > ./$(OUTPUT_DIR)/make_show_$${TIME}.txt 2>&1; \
+	echo $(COLOR_G)"Output saved to ./$(OUTPUT_DIR)/make_show_$${TIME}.txt"$(COLOR_END)
