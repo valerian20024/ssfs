@@ -100,10 +100,12 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
     }
 
     // Checking file size
-    if (offset >= target_inode->size) {
+    if (offset > target_inode->size) {
         ret = ssfs_EREAD;  // Nothing to read if offset is beyond file size
         goto error_management;
     }
+    if (target_inode->size == 0)
+        return 0;
     if (offset + len > target_inode->size)
         len = target_inode->size - offset;  // Read only available data
 
