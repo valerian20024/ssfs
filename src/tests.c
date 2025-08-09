@@ -168,7 +168,7 @@ void test2() {
 void test3() {
     print_warning("Starting test3...", NULL);
 
-    int bytes_num = 10;
+    int bytes_num = 1000;
     print_info("Allocating resources", "%d", bytes_num);
     uint8_t *data = malloc(bytes_num);
     if (!data) {
@@ -178,12 +178,12 @@ void test3() {
 
     // Fill data with a pattern
     for (int i = 0; i < bytes_num; i++) {
-        data[i] = (uint8_t)(i % 256);
+        data[i] = (uint8_t)(i % 16);
     }
 
     int inode = 2;  // value will be overriden
-    int lens[] = {10};
-    int offsets[] = {0};
+    int lens[] = {0, 16};
+    int offsets[] = {0, 1, 8, 16};
     int num_lens = sizeof(lens) / sizeof(lens[0]);
     int num_offsets = sizeof(offsets) / sizeof(offsets[0]);
 
@@ -224,7 +224,7 @@ void test3() {
             uint8_t *verify = malloc(len);
             if (verify) {
                 int read_bytes = read(inode, verify, len, offset);
-                print_info("Verification data:", NULL);
+                print_info("Reading data:", NULL);
                 for (int vi = 0; vi < read_bytes; vi++) {
                     fprintf(stdout, "%02X", verify[vi]);
                 }
@@ -235,6 +235,18 @@ void test3() {
                 } else {
                     print_error("Verification failed", NULL);
                 }
+                memset(verify, 0, len);
+                free(verify);
+            }
+            verify = malloc(len + offset);
+            if (verify) {
+                int read_bytes = read(inode, verify, len + offset, 0);
+                print_info("Reading file from 0:", NULL);
+                for (int vi = 0; vi < read_bytes; vi++) {
+                    fprintf(stdout, "%02X", verify[vi]);
+                }
+                fprintf(stdout, "\n");
+                memset(verify, 0, len + offset);
                 free(verify);
             }
         }

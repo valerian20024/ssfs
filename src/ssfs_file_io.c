@@ -114,6 +114,8 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
     if (ret != 0)
         goto error_management_free;
 
+    // todo extract to a function read_loop(uint32_t *data_block_addresses);
+    // todo returns negative integers on error, so test ret = read_loop and goto error_management_free
     // Read data blocks
     uint32_t bytes_read = 0;
     while (bytes_read < len) {
@@ -250,7 +252,7 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
         goto error_management;
     }
 
-    // Trivial empty writing
+    // Trivial empty reading
     if (_len == 0)
         return ret;
     
@@ -266,7 +268,6 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
     ret = vdisk_read(disk_handle, 0, buffer);
     if (ret != 0)
         goto error_management;
-    
     superblock_t *sb = (superblock_t *)buffer;  
 
     // Checking inode validity
@@ -288,67 +289,79 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
     inode_t *target_inode = &ib[0][target_inode_num];
 
     // Checking inode usage
-    if (!target_inode->valid) {
+    uint32_t valid = target_inode->valid;
+    uint32_t size = target_inode->size;
+    if (!valid || size < 0) {
         ret = ssfs_EINODE;
         goto error_management;
     }
 
-    // Case 1.2 without Case 6 : Writing before the beginning of file 
-    // up to a certain point *in* the file. Non-guessable behavior, so
-    // it's an error. 
-    if (_offset < 0 && (-_offset) + len < target_inode->size)
-        return 0;
-
-    // Case 2 : Writing from the beginning of (or from inside) the file
-    // to a point in the file. Basic behavior.  
-    if (offset <= target_inode->size && offset + len < target_inode->size)
-        write_in_file(target_inode, data, len, offset);
-    
-    // Case 3 : Writing from inside the file and goind beyond. Must
-    // first write inside the file, then complete with new allocation 
-    // and writes.
-    if (offset <= target_inode->size && offset + len > target_inode->size) {
-        //write_in_file();
-        //write_out_file();
+    /* From now on, len > 0, offset > 0, size >= 0 */
+    if (size == 0) {
+        // Write from the beginning of empty file.
+        if (offset == size) {
+            ret = write_out_file(inode, data, len, offset);
+        }
+        // Write past beginning of empty file, gap is filled with zeroes. 
+        else if (offset > size) {
+            //write_zeros();
+            ret = write_out_file(inode, data, len, offset);
+        }
+    } else {
+        // Write strictly inside the file.
+        if (offset + len <= size) {
+            ret = write_in_file(target_inode, data, len, offset);
+        } 
+        // Write both inside and out of the file.
+        else if (offset < size && offset + len > size) {
+            int bytes_in = write_in_file(inode, data, size - offset, offset);
+            int bytes_out = write_out_file(inode, data, len - (size - offset), size);
+            ret = bytes_in + bytes_out;
+        } 
+        // Write past the end of file.
+        else if (offset == size) {
+            ret = write_out_file(inode, data, len, offset);
+        }
+        // Write paste the end of file, gap is filled with zeroes.
+        else if (offset > size) {
+            //write_zeros();
+            ret = write_out_file(inode, data, len, offset);
+        }
     }
 
-    // Case 4 : Writing only past the end of the file. Requires new
-    // allocation, but we don't need to write inside the file.
-    if (offset >= target_inode->size) 
-        //write_out_file();
 
-    // Case 5 : If one wants to write something bigger than the actual file
-    // even if it wanted to start before it, the best to infer from that
-    // is to rewrite over the file and complete by allocating new blocks.
-    if (len > target_inode->size) {
-        //We need to tweak the numbers.
+/*
+    // From now on, len > 0, offset >= 0, size >= 0
+    // Compute potential new size and extend if needed (handles gaps and extension with zeros implicitly)
+    uint32_t new_size = size > offset + len ? size : offset + len;
+    if (new_size > size) {
+        ret = extend_file(target_inode, new_size);
+        if (ret != 0)
+            goto error_management;
     }
+
+    // Now the range is within the file, so write the data
+    int bytes_written = write_in_file(target_inode, data, len, offset);
+    if (bytes_written < 0) {
+        ret = bytes_written;
+        goto error_management;
+    }
+
+    // Save the updated inode block (size may have changed)
+    ret = vdisk_write(disk_handle, 1 + target_inode_block, buffer);
+    if (ret != 0)
+        goto error_management;
+    ret = vdisk_sync(disk_handle);
+    if (ret != 0)
+        goto error_management;
+
+    return bytes_written;
     
+*/
 
 
-    /*
-    
-    1 - len = 0 => OK return
-      - offset < 0 => error
-
-    2 - offset >= 0 && offset + len <= size : on ecrit dans le fichier sans allocation supplementaire
-
-    3 - offset <= size et offset + len > size : on ecrit dans le fichier et on alloue en plus et on écrit dedans
-        - allouer combien de blocks ? Retrouver leur valeur, ecrire dedans. ecrire combien de bytes dedans ?
-    4.1 - offset = size : alors on ne doit pas ecrire dans le fichier mais allouer des blocs et ecrire dedans 
-        - allouer combien de blocks ? Retrouver leur valeur, ecrire dedans. ecrire combien de bytes dedans ?
-    4.2 - offset > size : on ne doit pas ecrire dans le fichier, mais on alloue, on ecrit des zeros et on ecrit dedans
-        - allouer combien de blocks ? Retrouver leur valeur, ecrire dedans. ecrire combien de bytes dedans et apres combien de zeros ?
-    6 - len > size, alors on fait un tour de passe passe, et on retombe sur le cas 4 avec offset = 0, et on a calculé jusqu'où aller;
-
-    -> Il faut une fonction qui ecrit dans le fichier de base, sans allouer. On lui passe les valeurs 
-    qu'il faut pour qu'elle fasse son travail.
-
-    -> Il faut un fonction qui va allouer des blocks et ecrire dedans ce qu'il faut.
-    "allouer" ça veut dire flip un bit dans la bitmap ET changer les addresses de direct, ind, ind2 dans l'inode.
-    Il faut aussi penser à changer la taille du fichier dans l'inode.
-
-    */
+    if (ret != 0)
+        goto error_management;
 
     return ret;
 
@@ -430,4 +443,55 @@ int write_out_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset)
     return 0;
 }
 
+int write_zeroes(inode_t *inode, uint32_t start, uint32_t end) {
+    (void)inode;
+    (void)start;
+    (void)end;
+    return 0;
+}
+
+/*
+ * Helper function to allocate and return a free physical block.
+ * Returns 0 on success, with *block set to the block number.
+ * Returns negative error code on failure.
+ */
+int get_free_block(uint32_t *block) {
+    if (!is_mounted()) return ssfs_EMOUNT;
+    if (allocated_blocks_handle == NULL) return ssfs_EALLOC;
+    for (uint32_t b = 0; b < disk_handle->size_in_sectors; b++) {
+        if (!allocated_blocks_handle[b]) {
+            *block = b;
+            return set_block_status(b, true);  // Mark as allocated
+        }
+    }
+    return ssfs_ENOSPACE;
+}
+
+/**
+ * @brief Extends the file to a new size by allocating additional blocks if needed.
+ *
+ * Allocates new data blocks for the extension (implicitly zeroed), updates inode pointers,
+ * and sets the new file size. Assumes new_size > inode->size.
+ *
+ * @param inode Pointer to the inode to extend.
+ * @param new_size The new file size (must be > inode->size).
+ * @return 0 on success, negative error code on failure.
+ */
+int extend_file(inode_t *inode, uint32_t new_size) {
+    if (new_size <= inode->size) return 0;  // Nothing to do
+
+    uint32_t current_blocks = (inode->size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
+    uint32_t needed_blocks = (new_size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
+
+    for (uint32_t logical = current_blocks; logical < needed_blocks; logical++) {
+        uint32_t physical;
+        int ret = get_free_block(&physical);
+        if (ret != 0) return ret;
+        ret = set_data_block_pointer(inode, logical, physical);
+        if (ret != 0) return ret;
+    }
+
+    inode->size = new_size;
+    return 0;
+}
 
