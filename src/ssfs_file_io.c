@@ -42,13 +42,6 @@
  * @note Won't test file reachability if reading 0 bytes.
  */
 int read(int inode_num, uint8_t *data, int _len, int _offset) {
-///*
-    fprintf(stdout, "BEGINNING OF READ\n");
-    fprintf(stdout, "disk_handle->sector_size = %d\n", disk_handle->sector_size);
-    fprintf(stdout, "disk_handle->size_in_sectors = %d\n", disk_handle->size_in_sectors);
-    fprintf(stdout, "disk_handle->name = %s\n", disk_handle->name);
-    fprintf(stdout, "disk_handle->fp = %p\n", (void*)disk_handle->fp);
-///*
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -116,11 +109,10 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
         ret = ssfs_EALLOC;
         goto error_management;
     }
+
     ret = get_file_block_addresses(target_inode, data_block_addresses, required_data_blocks_num);
     if (ret != 0)
         goto error_management_free;
-
-    fprintf(stdout, "\n");
 
     // Read data blocks
     uint32_t bytes_read = 0;
@@ -128,41 +120,20 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
         uint32_t absolute_file_position = offset + bytes_read;
         uint32_t block_index            = absolute_file_position / VDISK_SECTOR_SIZE;
         uint32_t offset_within_block    = absolute_file_position % VDISK_SECTOR_SIZE;       
-/*
-        fprintf(stdout, "bytes_read = %d\n", bytes_read);
-        fprintf(stdout, "absolute_file_position = %d\n", absolute_file_position);
-        fprintf(stdout, "block_index = %d\n", block_index);
-        fprintf(stdout, "offset_within_block = %d\n", offset_within_block);
-*/
+
         // Will copy the minimum between the remaining bytes in the block and in total
         uint32_t bytes_remaining_in_block = VDISK_SECTOR_SIZE - offset_within_block;
         uint32_t bytes_remaining_in_total = len - bytes_read;
         uint32_t bytes_to_read = (bytes_remaining_in_block < bytes_remaining_in_total) ?
             bytes_remaining_in_block :
             bytes_remaining_in_total;
-/*
-        fprintf(stdout, "bytes_remaining_in_block = %d\n", bytes_remaining_in_block);
-        fprintf(stdout, "bytes_remaining_in_total = %d\n", bytes_remaining_in_total);
-        fprintf(stdout, "  => bytes_to_read = %d\n", bytes_to_read);
-        fprintf(stdout, "data_block_addresses[block_index] = %d\n", data_block_addresses[block_index]);
-*/
 
         ret = vdisk_read(disk_handle, data_block_addresses[block_index], buffer);
-        if (ret != 0) {
-            fprintf(stderr, "ERROR WHEN VDISK READ\n");
+        if (ret != 0)
             goto error_management_free;
-        }
-
-        fprintf(stdout, "\n");
 
         memcpy(data + bytes_read, buffer + offset_within_block, bytes_to_read);
-/*
-        fprintf(stdout, "END OF LOOP\n");
-        fprintf(stdout, "disk_handle->sector_size = %d\n", disk_handle->sector_size);
-        fprintf(stdout, "disk_handle->size_in_sectors = %d\n", disk_handle->size_in_sectors);
-        fprintf(stdout, "disk_handle->name = %s\n", disk_handle->name);
-        fprintf(stdout, "disk_handle->fp = %p\n", (void*)disk_handle->fp);
-*/
+
         bytes_read += bytes_to_read;
     }
 
@@ -270,28 +241,57 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t 
  *
  */
 int write(int inode_num, uint8_t *data, int _len, int _offset) {
-    uint32_t len = (uint32_t) _len;
-    uint32_t offset = (uint32_t) _offset;
-
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
-    // Determining which precise inode we are looking for
-    uint32_t target_inode_block = inode_num / 32;
-    uint32_t target_inode_num   = inode_num % 32;
+    // Checking input parameters
+    if (_len < 0 || _offset < 0) {
+        ret = ssfs_EINVAL;
+        goto error_management;
+    }
 
+    // Trivial empty writing
+    if (_len == 0)
+        return ret;
+    
+    if (!is_mounted()) {
+        ret = ssfs_EMOUNT;
+        goto error_management;
+    }
+
+    uint32_t len = (uint32_t) _len;
+    uint32_t offset = (uint32_t) _offset;
+    
+    // Reading superblock
+    ret = vdisk_read(disk_handle, 0, buffer);
+    if (ret != 0)
+        goto error_management;
+    
+    superblock_t *sb = (superblock_t *)buffer;  
+
+    // Checking inode validity
+    uint32_t total_inodes = sb->num_inode_blocks * 32;
+    if (!is_inode_valid(inode_num, total_inodes)) {
+        ret = ssfs_EALLOC;
+        goto error_management;
+    }
+
+    // Reading the inode block and finding the target inode
+    uint32_t target_inode_block = inode_num / 32;
+    uint32_t target_inode_num  = inode_num % 32;
     ret = vdisk_read(disk_handle, 1 + target_inode_block, buffer);
     if (ret != 0) {
         ret = vdisk_EACCESS;
         goto error_management;
     }
-
     inodes_block_t* ib = (inodes_block_t *)buffer;
     inode_t *target_inode = &ib[0][target_inode_num];
 
-    // Case 1.1 : writing nothing, which trivially is a success.
-    if (len == 0)
-        return 0;
+    // Checking inode usage
+    if (!target_inode->valid) {
+        ret = ssfs_EINODE;
+        goto error_management;
+    }
 
     // Case 1.2 without Case 6 : Writing before the beginning of file 
     // up to a certain point *in* the file. Non-guessable behavior, so
@@ -350,8 +350,10 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
 
     */
 
-    goto error_management;
+    return ret;
+
 error_management:
+    fprintf(stderr, "Error when writing (code %d)", ret);
     return ret;
 }
 
@@ -361,9 +363,7 @@ error_management:
  */
 int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) {
     int ret = 0;
-    uint8_t buffer[VDISK_SECTOR_SIZE];  // Will allow to read to and write from
-
-    // * no need to check inode's fields validity, it must be done by the caller fn
+    uint8_t buffer[VDISK_SECTOR_SIZE];
  
     // Computing the total number of DB for the file
     uint32_t required_data_blocks_num = (inode->size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
@@ -373,17 +373,13 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
         goto error_management;
     }
 
-    //get_file_block_addresses(inode, data_block_addresses, required_data_blocks_num);
+    ret = get_file_block_addresses(inode, data_block_addresses, required_data_blocks_num);
+    if (ret != 0)
+        goto error_management_free;
     
     uint32_t bytes_written = 0;
     while (bytes_written < len) {
-
-        // This is the absolute position within the file
         uint32_t absolute_file_position = offset + bytes_written;
-        
-        // The block we're currently positioned and the byte in that block
-        // block_index is the logical block index, i.e. the index in data_block_addresses
-        // which is different from the actual physical block index in the disk
         uint32_t block_index = absolute_file_position / VDISK_SECTOR_SIZE;
         uint32_t offset_within_block = absolute_file_position % VDISK_SECTOR_SIZE;
 
@@ -394,23 +390,18 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
             bytes_remaining_in_block :
             bytes_remaining_in_total;
      
-        // Read, change, write, sync
         ret = vdisk_read(disk_handle, data_block_addresses[block_index], buffer);
         if (ret != 0)
             goto error_management_free;
 
-        // Now we write in the buffer
         memcpy(buffer + offset_within_block, data + bytes_written, bytes_to_write);
 
-        // Write back to the disk and sync
         ret = vdisk_write(disk_handle, data_block_addresses[block_index], buffer);
         if (ret != 0)
             goto error_management_free;
         vdisk_sync(disk_handle);
 
-        // Updating variables for next iteration
         bytes_written += bytes_to_write;
-        offset_within_block = 0;  // When block 0 is written, we write from the beginning
     }
 
     free(data_block_addresses);
