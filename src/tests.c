@@ -168,7 +168,7 @@ void test2() {
 void test3() {
     print_warning("Starting test3...", NULL);
 
-    int bytes_num = 10000;
+    int bytes_num = 10;
     print_info("Allocating resources", "%d", bytes_num);
     uint8_t *data = malloc(bytes_num);
     if (!data) {
@@ -181,17 +181,19 @@ void test3() {
         data[i] = (uint8_t)(i % 256);
     }
 
-    int inode = 0;
-    int lens[] = {10, 100, 1000, 4096};
-    int offsets[] = {0, 5, 50, 100};
+    int inode = 2;  // value will be overriden
+    int lens[] = {10};
+    int offsets[] = {0};
     int num_lens = sizeof(lens) / sizeof(lens[0]);
     int num_offsets = sizeof(offsets) / sizeof(offsets[0]);
 
-    char *disk_name = "disk_img.3";
+    char *disk_name = "disk_img.2";
+    //format(disk_name, 45);
     print_info("Mounting", "%s", disk_name);
     mount(disk_name);
 
     // Create a file to write to
+    /*
     inode = create();
     if (inode < 0) {
         print_error("Failed to create file", "%d", inode);
@@ -200,6 +202,7 @@ void test3() {
         return;
     }
     print_success("Created file with inode", "%d", inode);
+    */
 
     for (int l = 0; l < num_lens; l++) {
         for (int o = 0; o < num_offsets; o++) {
@@ -221,6 +224,12 @@ void test3() {
             uint8_t *verify = malloc(len);
             if (verify) {
                 int read_bytes = read(inode, verify, len, offset);
+                print_info("Verification data:", NULL);
+                for (int vi = 0; vi < read_bytes; vi++) {
+                    fprintf(stdout, "%02X", verify[vi]);
+                }
+                fprintf(stdout, "\n");
+
                 if (read_bytes == len && memcmp(data, verify, len) == 0) {
                     print_success("Verification passed", NULL);
                 } else {

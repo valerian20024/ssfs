@@ -301,7 +301,7 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
 
     // Case 2 : Writing from the beginning of (or from inside) the file
     // to a point in the file. Basic behavior.  
-    if (offset <= target_inode->size && offset + len > target_inode->size)
+    if (offset <= target_inode->size && offset + len < target_inode->size)
         write_in_file(target_inode, data, len, offset);
     
     // Case 3 : Writing from inside the file and goind beyond. Must
@@ -366,7 +366,7 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
     uint8_t buffer[VDISK_SECTOR_SIZE];
  
     // Computing the total number of DB for the file
-    uint32_t required_data_blocks_num = (inode->size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
+    uint32_t required_data_blocks_num = 1 + (offset + len - 1) / VDISK_SECTOR_SIZE;
     uint32_t *data_block_addresses = malloc(required_data_blocks_num * sizeof(uint32_t));
     if (data_block_addresses == NULL) {
         ret = ssfs_EALLOC;
