@@ -296,7 +296,8 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
         goto error_management;
     }
 
-    /* From now on, len > 0, offset > 0, size >= 0 */
+    // From now on, len > 0, offset > 0, size >= 0 
+/*
     if (size == 0) {
         // Write from the beginning of empty file.
         if (offset == size) {
@@ -328,6 +329,19 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
             ret = write_out_file(target_inode, data, len, offset);
         }
     }
+*/
+    // Extend file if needed to cover offset + len
+    uint32_t new_size = size > offset + len ? size : offset + len;
+    if (new_size > size) {
+        ret = extend_file(target_inode, new_size);
+        if (ret != 0)
+            goto error_management;
+    }
+
+    // Write the data (range is now within file size)
+    ret = write_in_file(target_inode, data, len, offset);
+    if (ret < 0)
+        goto error_management;
 
     if (ret != 0)
         goto error_management;

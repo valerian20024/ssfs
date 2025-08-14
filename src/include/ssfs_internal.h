@@ -72,6 +72,7 @@ void print_warning(const char *label, const char *format, ...);
 void test1();
 void test2();
 void test3();
+void test4();
 
 // ssfs_core
 
