@@ -82,12 +82,12 @@ check-libs:
 # Compile C files to object files.
 $(OBJS_DIR)/%.o: %.c | check-libs
 	@mkdir -p $(@D)
-	@echo $(COLOR_Y)"Compiling $< -> $@"$(COLOR_END)
+	@echo -e $(COLOR_Y)"Compiling $< -> $@"$(COLOR_END)
 	@$(CC) $(FLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
 # Linking into final executable.
 $(TARGET): $(OBJS) | check-libs
-	@echo $(COLOR_Y)"Linking $(TARGET)."$(COLOR_END)
+	@echo -e $(COLOR_Y)"Linking $(TARGET)."$(COLOR_END)
 	@$(CC) $(OBJS) -o $@ -lbsd
 
 # +---------------+
@@ -99,14 +99,14 @@ $(TARGET): $(OBJS) | check-libs
 # Will recreate directories for object files and print informations.
 debug:
 	@mkdir -p obj/vdisk
-	@echo $(COLOR_G)"SRC_DIR : "	$(COLOR_END)	$(SRCS_DIR)
-	@echo $(COLOR_G)"SRCS : "		$(COLOR_END)	$(SRCS)
-	@echo $(COLOR_G)"OBJS_DIR : "	$(COLOR_END)	$(OBJS_DIR)
-	@echo $(COLOR_G)"OBJS : "		$(COLOR_END)	$(OBJS)
-	@echo $(COLOR_Y)"Compiled using :" $(COLOR_END)
-	@echo $(CC) $(FLAGS) -I$(INCLUDE_DIR) -c -o
-	@echo $(COLOR_Y)"Linked using :" $(COLOR_END)
-	@echo $(CC) $(OBJS) -o
+	@echo -e $(COLOR_G)"SRC_DIR : "	$(COLOR_END)	$(SRCS_DIR)
+	@echo -e $(COLOR_G)"SRCS : "		$(COLOR_END)	$(SRCS)
+	@echo -e $(COLOR_G)"OBJS_DIR : "	$(COLOR_END)	$(OBJS_DIR)
+	@echo -e $(COLOR_G)"OBJS : "		$(COLOR_END)	$(OBJS)
+	@echo -e $(COLOR_Y)"Compiled using :" $(COLOR_END)
+	@echo -e $(CC) $(FLAGS) -I$(INCLUDE_DIR) -c -o
+	@echo -e $(COLOR_Y)"Linked using :" $(COLOR_END)
+	@echo -e $(CC) $(OBJS) -o
 
 clean:
 	@rm -f $(TARGET)
@@ -114,16 +114,16 @@ clean:
 	@rm -rf $(OBJS_DIR)
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(TEST_DIR)
-	@echo $(COLOR_R)"Cleaned:" $(COLOR_END)
-	@echo "  $(TARGET)"
-	@echo "  $(ARCHIVE)"
-	@echo "  $(OBJS_DIR)/"
-	@echo "  $(BUILD_DIR)/"
-	@echo "  $(TEST_DIR)/"
+	@echo -e $(COLOR_R)"Cleaned:" $(COLOR_END)
+	@echo -e "  $(TARGET)"
+	@echo -e "  $(ARCHIVE)"
+	@echo -e "  $(OBJS_DIR)/"
+	@echo -e "  $(BUILD_DIR)/"
+	@echo -e "  $(TEST_DIR)/"
 
 # Create a submission archive with source files, Makefile, include, and vdisk directories inside a src/ folder
 build:
-	@echo $(COLOR_Y)"Creating submission archive src.tar.gz with src/ folder"$(COLOR_END)
+	@echo -e $(COLOR_Y)"Creating submission archive src.tar.gz with src/ folder"$(COLOR_END)
 	@rm -rf build
 	@mkdir -p build/src
 	@cp -r *.c build/src/
@@ -132,13 +132,13 @@ build:
 	@cp -r vdisk build/src/
 	@tar -czf $(ARCHIVE) -C build src
 	@rm -rf build
-	@echo $(COLOR_G)"Submission archive src.tar.gz created successfully"$(COLOR_END)
+	@echo -e $(COLOR_G)"Submission archive src.tar.gz created successfully"$(COLOR_END)
 
 show:
-	@echo $(COLOR_Y)"Restoring raw files from hex dumps in $(OUTPUT_DIR)"$(COLOR_END)
+	@echo -e $(COLOR_Y)"Restoring raw files from hex dumps in $(OUTPUT_DIR)"$(COLOR_END)
 	for f in $(OUTPUT_DIR)/*.hex; do \
 		[ -e "$$f" ] || continue; \
 		outfile=$${f%.hex}.raw; \
 		xxd -r -p "$$f" "$$outfile"; \
-		echo "Restored $$outfile from $$f"; \
+		echo -e "Restored $$outfile from $$f"; \
 	done

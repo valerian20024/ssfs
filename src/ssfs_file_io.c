@@ -291,7 +291,7 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
     // Checking inode usage
     uint32_t valid = target_inode->valid;
     uint32_t size = target_inode->size;
-    if (!valid || size < 0) {
+    if (!valid) {
         ret = ssfs_EINODE;
         goto error_management;
     }
@@ -300,12 +300,12 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
     if (size == 0) {
         // Write from the beginning of empty file.
         if (offset == size) {
-            ret = write_out_file(inode, data, len, offset);
+            ret = write_out_file(target_inode, data, len, offset);
         }
         // Write past beginning of empty file, gap is filled with zeroes. 
         else if (offset > size) {
             //write_zeros();
-            ret = write_out_file(inode, data, len, offset);
+            ret = write_out_file(target_inode, data, len, offset);
         }
     } else {
         // Write strictly inside the file.
@@ -314,51 +314,20 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
         } 
         // Write both inside and out of the file.
         else if (offset < size && offset + len > size) {
-            int bytes_in = write_in_file(inode, data, size - offset, offset);
-            int bytes_out = write_out_file(inode, data, len - (size - offset), size);
+            int bytes_in = write_in_file(target_inode, data, size - offset, offset);
+            int bytes_out = write_out_file(target_inode, data, len - (size - offset), size);
             ret = bytes_in + bytes_out;
         } 
         // Write past the end of file.
         else if (offset == size) {
-            ret = write_out_file(inode, data, len, offset);
+            ret = write_out_file(target_inode, data, len, offset);
         }
         // Write paste the end of file, gap is filled with zeroes.
         else if (offset > size) {
             //write_zeros();
-            ret = write_out_file(inode, data, len, offset);
+            ret = write_out_file(target_inode, data, len, offset);
         }
     }
-
-
-/*
-    // From now on, len > 0, offset >= 0, size >= 0
-    // Compute potential new size and extend if needed (handles gaps and extension with zeros implicitly)
-    uint32_t new_size = size > offset + len ? size : offset + len;
-    if (new_size > size) {
-        ret = extend_file(target_inode, new_size);
-        if (ret != 0)
-            goto error_management;
-    }
-
-    // Now the range is within the file, so write the data
-    int bytes_written = write_in_file(target_inode, data, len, offset);
-    if (bytes_written < 0) {
-        ret = bytes_written;
-        goto error_management;
-    }
-
-    // Save the updated inode block (size may have changed)
-    ret = vdisk_write(disk_handle, 1 + target_inode_block, buffer);
-    if (ret != 0)
-        goto error_management;
-    ret = vdisk_sync(disk_handle);
-    if (ret != 0)
-        goto error_management;
-
-    return bytes_written;
-    
-*/
-
 
     if (ret != 0)
         goto error_management;
@@ -443,14 +412,7 @@ int write_out_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset)
     return 0;
 }
 
-/*
-int write_zeroes(inode_t *inode, uint32_t start, uint32_t end) {
-    (void)inode;
-    (void)start;
-    (void)end;
-    return 0;
-}
-*/
+
 
 /*
  * Helper function to allocate and return a free physical block.
@@ -458,8 +420,9 @@ int write_zeroes(inode_t *inode, uint32_t start, uint32_t end) {
  * Returns negative error code on failure.
  */
 int get_free_block(uint32_t *block) {
-    if (!is_mounted()) return ssfs_EMOUNT;
-    if (allocated_blocks_handle == NULL) return ssfs_EALLOC;
+    if (allocated_blocks_handle == NULL) 
+        return ssfs_EALLOC;
+
     for (uint32_t b = 0; b < disk_handle->size_in_sectors; b++) {
         if (!allocated_blocks_handle[b]) {
             *block = b;
@@ -467,6 +430,92 @@ int get_free_block(uint32_t *block) {
         }
     }
     return ssfs_ENOSPACE;
+}
+
+/*
+ * Helper function to set the physical block pointer for a logical block index
+ * in the inode.
+ * 
+ * Allocates indirect/double-indirect blocks if needed.
+ * Returns 0 on success, negative error code on failure.
+ */
+int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical) {
+    int ret = 0;
+    uint8_t buffer[VDISK_SECTOR_SIZE];
+
+    if (logical < 4) {
+        inode->direct[logical] = physical;
+        return 0;
+    }
+
+    logical -= 4;
+    if (logical < 256) {
+        if (inode->indirect1 == 0) {
+            uint32_t ind_block;
+            ret = get_free_block(&ind_block);
+            if (ret != 0) 
+                return ret;
+            inode->indirect1 = ind_block;
+        }
+
+        ret = vdisk_read(disk_handle, inode->indirect1, buffer);
+        if (ret != 0) 
+            return ret;
+        ((uint32_t *)buffer)[logical] = physical;
+        ret = vdisk_write(disk_handle, inode->indirect1, buffer);
+        if (ret != 0) 
+            return ret;
+        return vdisk_sync(disk_handle);
+    }
+
+    logical -= 256;
+    if (logical >= 256 * 256) 
+        return ssfs_ENOSPACE;
+
+    uint32_t ind_index = logical / 256;
+    uint32_t sub_index = logical % 256;
+
+    if (inode->indirect2 == 0) {
+        uint32_t dind_block;
+        ret = get_free_block(&dind_block);
+        if (ret != 0) return ret;
+        inode->indirect2 = dind_block;
+    }
+
+    ret = vdisk_read(disk_handle, inode->indirect2, buffer);
+    if (ret != 0) 
+        return vdisk_EACCESS;
+    uint32_t *dptrs = (uint32_t *)buffer;
+
+    if (dptrs[ind_index] == 0) {
+        uint32_t ind_block;
+        ret = get_free_block(&ind_block);
+        if (ret != 0) 
+            return ret;
+        dptrs[ind_index] = ind_block;
+
+        ret = vdisk_write(disk_handle, inode->indirect2, buffer);
+        if (ret != 0) 
+            return ret;
+        ret = vdisk_sync(disk_handle);
+        if (ret != 0) 
+            return ret;
+    }
+
+    uint32_t ind_block = dptrs[ind_index];
+    ret = vdisk_read(disk_handle, ind_block, buffer);
+    if (ret != 0) 
+        return ret;
+    ((uint32_t *)buffer)[sub_index] = physical;
+
+    ret = vdisk_write(disk_handle, ind_block, buffer);
+    if (ret != 0) 
+        return ret;
+    ret = vdisk_sync(disk_handle);
+    if (ret != 0) 
+        return ret;
+
+    return ret;
 }
 
 /**
@@ -484,16 +533,26 @@ int extend_file(inode_t *inode, uint32_t new_size) {
     if (new_size <= inode->size) 
         return ret;
 
+    // Find possible allocatable blocks in the bitmap.
+    // Set the blocks in the bitmap as used.
+    // Add to the inode's direct, indirect1, indirect2 addresses the new ones.
+    // Set size of inode to new size.
+
+    // Calculate current and needed block counts
     uint32_t current_blocks = (inode->size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
     uint32_t needed_blocks = (new_size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
 
+    // Allocate new blocks and assign to inode pointers
     for (uint32_t logical = current_blocks; logical < needed_blocks; logical++) {
         uint32_t physical;
-        int ret = get_free_block(&physical);
-        if (ret != 0) return ret;
+        ret = get_free_block(&physical);
+        if (ret != 0)
+            return ret;
         ret = set_data_block_pointer(inode, logical, physical);
-        if (ret != 0) return ret;
+        if (ret != 0)
+            return ret;
     }
+
 
     inode->size = new_size;
     return ret;
