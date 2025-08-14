@@ -443,12 +443,14 @@ int write_out_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset)
     return 0;
 }
 
+/*
 int write_zeroes(inode_t *inode, uint32_t start, uint32_t end) {
     (void)inode;
     (void)start;
     (void)end;
     return 0;
 }
+*/
 
 /*
  * Helper function to allocate and return a free physical block.
@@ -471,14 +473,16 @@ int get_free_block(uint32_t *block) {
  * @brief Extends the file to a new size by allocating additional blocks if needed.
  *
  * Allocates new data blocks for the extension (implicitly zeroed), updates inode pointers,
- * and sets the new file size. Assumes new_size > inode->size.
+ * and sets the new file size.
  *
  * @param inode Pointer to the inode to extend.
  * @param new_size The new file size (must be > inode->size).
  * @return 0 on success, negative error code on failure.
  */
 int extend_file(inode_t *inode, uint32_t new_size) {
-    if (new_size <= inode->size) return 0;  // Nothing to do
+    int ret = 0;
+    if (new_size <= inode->size) 
+        return ret;
 
     uint32_t current_blocks = (inode->size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
     uint32_t needed_blocks = (new_size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
@@ -492,6 +496,6 @@ int extend_file(inode_t *inode, uint32_t new_size) {
     }
 
     inode->size = new_size;
-    return 0;
+    return ret;
 }
 

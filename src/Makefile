@@ -77,6 +77,8 @@ check-libs:
 		echo -e $(COLOR_R)"No supported package manager (apt-get or pacman) found."$(COLOR_END); \
 		echo -e "Please ensure libbsd is installed manually."; \
 		exit 1; \
+	fi
+
 # Compile C files to object files.
 $(OBJS_DIR)/%.o: %.c | check-libs
 	@mkdir -p $(@D)
