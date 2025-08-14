@@ -48,15 +48,35 @@ all: $(TARGET)
 # | Compilation of files |
 # +----------------------+
 
-# Check libs dependencies 
+# Check libs dependencies
 check-libs:
-	@echo $(COLOR_Y)"Checking for libbsd-dev..."$(COLOR_END);
-	@dpkg -l | grep -q libbsd-dev || { \
-		echo "Installing libbsd-dev..."; \
-		sudo apt-get update && sudo apt-get install -y libbsd-dev; \
-	}
-	@echo $(COLOR_G)"libbsd-dev is installed"$(COLOR_END);
-
+	@echo -e $(COLOR_Y)"Checking for libbsd..."$(COLOR_END);
+	@if command -v apt-get >/dev/null 2>&1; then \
+		if dpkg -l | grep -q libbsd-dev; then \
+			echo -e $(COLOR_G)"libbsd-dev is installed (Debian/Ubuntu)"$(COLOR_END); \
+		else \
+			echo -e "Installing libbsd-dev..."; \
+			sudo apt-get update && sudo apt-get install -y libbsd-dev || { \
+				echo -e $(COLOR_R)"Failed to install libbsd-dev. Please install it manually."$(COLOR_END); \
+				exit 1; \
+			}; \
+			echo -e $(COLOR_G)"libbsd-dev installed successfully"$(COLOR_END); \
+		fi; \
+	elif command -v pacman >/dev/null 2>&1; then \
+		if pacman -Q libbsd >/dev/null 2>&1; then \
+			echo -e $(COLOR_G)"libbsd is installed (Arch/Manjaro)"$(COLOR_END); \
+		else \
+			echo -e "Installing libbsd..."; \
+			sudo pacman -S --noconfirm libbsd || { \
+				echo -e $(COLOR_R)"Failed to install libbsd. Please install it manually."$(COLOR_END); \
+				exit 1; \
+			}; \
+			echo -e $(COLOR_G)"libbsd installed successfully"$(COLOR_END); \
+		fi; \
+	else \
+		echo -e $(COLOR_R)"No supported package manager (apt-get or pacman) found."$(COLOR_END); \
+		echo -e "Please ensure libbsd is installed manually."; \
+		exit 1; \
 # Compile C files to object files.
 $(OBJS_DIR)/%.o: %.c | check-libs
 	@mkdir -p $(@D)
