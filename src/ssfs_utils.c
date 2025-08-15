@@ -287,9 +287,6 @@ int deallocate_double_indirect_block(uint32_t double_indirect_block) {
     return _update_double_indirect_block_status(double_indirect_block, false);
 }
 
-
-
-
 /**
  * @brief Prints a formatted message with colored label and content.
  *

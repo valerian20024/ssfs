@@ -159,7 +159,7 @@ void test2() {
 void test3() {
     print_warning("Starting test3...", NULL);
 
-    int bytes_num = 1000;
+    int bytes_num = VDISK_SECTOR_SIZE;
     print_info("Allocating resources", "%d", bytes_num);
     uint8_t *data = malloc(bytes_num);
     if (!data) {
@@ -173,18 +173,16 @@ void test3() {
     }
 
     int inode = 2;  // value will be overriden
-    int lens[] = {0, 16};
+    int lens[] = {16};
     int offsets[] = {0, 1, 8, 16};
     int num_lens = sizeof(lens) / sizeof(lens[0]);
     int num_offsets = sizeof(offsets) / sizeof(offsets[0]);
 
     char *disk_name = "disk_img.2";
-    //format(disk_name, 45);
     print_info("Mounting", "%s", disk_name);
     mount(disk_name);
 
     // Create a file to write to
-    /*
     inode = create();
     if (inode < 0) {
         print_error("Failed to create file", "%d", inode);
@@ -193,7 +191,7 @@ void test3() {
         return;
     }
     print_success("Created file with inode", "%d", inode);
-    */
+    print_inode_num_info(inode);
 
     for (int l = 0; l < num_lens; l++) {
         for (int o = 0; o < num_offsets; o++) {
@@ -210,8 +208,9 @@ void test3() {
                 print_success("Number of bytes successfully written", "%d", bytes);
             else
                 print_error("Error when writing", "%d", bytes);
-
-            // Optionally, read back and verify
+            print_inode_num_info(inode);
+            
+            // Read back and verify
             uint8_t *verify = malloc(len);
             if (verify) {
                 int read_bytes = read(inode, verify, len, offset);

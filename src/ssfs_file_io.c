@@ -304,6 +304,13 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
         ret = extend_file(target_inode, new_size);
         if (ret != 0)
             goto error_management;
+
+        ret = vdisk_write(disk_handle, 1 + target_inode_block, buffer);
+        if (ret != 0) 
+            return ret;
+        ret = vdisk_sync(disk_handle);
+        if (ret != 0) 
+            return ret;
     }
 
     // Write the data (range is now within file size)
@@ -311,13 +318,10 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
     if (ret < 0)
         goto error_management;
 
-    if (ret != 0)
-        goto error_management;
-
     return ret;
 
 error_management:
-    fprintf(stderr, "Error when writing (code %d)", ret);
+    fprintf(stderr, "Error when writing (code %d)\n", ret);
     return ret;
 }
 
@@ -363,7 +367,9 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) 
         ret = vdisk_write(disk_handle, data_block_addresses[block_index], buffer);
         if (ret != 0)
             goto error_management_free;
-        vdisk_sync(disk_handle);
+        ret = vdisk_sync(disk_handle);
+        if (ret != 0)
+            goto error_management_free;
 
         bytes_written += bytes_to_write;
     }
