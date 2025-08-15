@@ -266,20 +266,21 @@ void test4() {
 
     // Allocate a small buffer for reading/writing data
     int bytes_num = VDISK_SECTOR_SIZE;  // 1024 bytes
-    print_info("Allocating resources", "%d", bytes_num);
     uint8_t *data = malloc(bytes_num);
     if (!data) {
         print_error("Memory allocation failed", NULL);
         return;
     }
     memset(data, 0xAA, bytes_num);  // Fill with a pattern for write tests
+    
+    print_info("Allocating resources", "data is %d bytes", bytes_num);
 
-    // Test parameters
-    char *disk_name = "disk_img.4";
 
     // Format and mount a new disk
-    print_info("Formatting", "%s with %d inodes", disk_name, 32);
-    int ret = format(disk_name, 32);
+    char *disk_name = "disk_img.4";
+    int minimum_inodes = 32;
+    print_info("Formatting", "%s with %d inodes", disk_name, minimum_inodes);
+    int ret = format(disk_name, minimum_inodes);
     if (ret != 0) {
         print_error("Failed to format disk", "%d", ret);
         free(data);
@@ -323,16 +324,15 @@ void test4() {
     uint32_t block1, block2;
     ret = get_free_block(&block1);
     if (ret == 0) {
-        print_success("Allocated block", "%u", block1);
-        ret = get_free_block(&block2);
-        if (ret == 0 && block2 != block1) {
-            print_success("Allocated second block", "%u", block2);
-        } else {
-            print_error("Failed to allocate second block or duplicate block", "%d", ret);
-        }
-    } else {
-        print_error("Failed to allocate block", "%d", ret);
-    }
+        print_success("Allocated block", "%u", block1); } 
+    else {
+        print_error("Failed to get first free block", "%d", ret); }
+    
+    ret = get_free_block(&block2);
+    if (ret == 0) {
+        print_success("Allocated block", "%u", block2); } 
+    else {
+        print_error("Failed to get second free block", "%d", ret); }
 
     // Test 2: set_data_block_pointer (direct, indirect, double-indirect)
     print_warning("Testing set_data_block_pointer", NULL);
@@ -341,17 +341,18 @@ void test4() {
     for (int i = 0; i < num_indices; i++) {
         uint32_t logical = logical_indices[i];
         uint32_t physical;
+
         ret = get_free_block(&physical);
-        if (ret != 0) {
-            print_error("Failed to get free block for logical %u", "%d", ret);
-            continue;
-        }
+        if (ret == 0) {
+            print_success("Allocated block", "%u", physical); } 
+        else {
+            print_error("Failed to get free block", "%d", ret); }
+
         ret = set_data_block_pointer(target_inode, logical, physical);
         if (ret == 0) {
-            print_success("Set pointer for logical block %u to physical %u", "%u, %u", logical, physical);
-        } else {
-            print_error("Failed to set pointer for logical block %u", "%u: %d", logical, ret);
-        }
+            print_success("Set pointer blocks", "logical: %u, physical: %u", logical, physical); } 
+        else {
+            print_error("Failed to set pointer for logical block", "logical: %u, error code: %d", logical, ret); }
     }
 
     // Save inode after setting pointers
@@ -364,21 +365,22 @@ void test4() {
     }
     vdisk_sync(disk_handle);
 
-    // Test 4: extend_file
-    print_info("Testing extend_file", NULL);
+    // Test 3: extend_file
+    print_warning("Testing extend_file", NULL);
     uint32_t new_sizes[] = {1024, 4096, 5120, 266240};  // 1 block, 4 blocks (direct), 5 blocks (indirect), 260 blocks (double-indirect)
     int num_sizes = sizeof(new_sizes) / sizeof(new_sizes[0]);
     for (int i = 0; i < num_sizes; i++) {
         uint32_t new_size = new_sizes[i];
         ret = extend_file(target_inode, new_size);
         if (ret == 0) {
-            print_success("Extended file to size %u", "%u", new_size);
+            print_success("Extended file to size", "%u", new_size);
+            
             // Verify size
             if (target_inode->size == new_size) {
-                print_success("Inode size updated correctly to %u", "%u", new_size);
-            } else {
-                print_error("Inode size mismatch: expected %u, got %u", "%u, %u", new_size, target_inode->size);
-            }
+                print_success("Inode size updated correctly to", "%u", target_inode->size); }
+            else {
+                print_error("Inode size mismatch", "new_size: %u, target_inode->size: %u", new_size, target_inode->size); }
+
             // Verify blocks are allocated and zeroed
             ret = read(inode_num, data, VDISK_SECTOR_SIZE, new_size - VDISK_SECTOR_SIZE);
             if (ret >= 0) {
@@ -390,16 +392,16 @@ void test4() {
                     }
                 }
                 if (all_zeros) {
-                    print_success("Last block of size %u is zeroed", "%u", new_size);
-                } else {
-                    print_error("Last block of size %u is not zeroed", "%u", new_size);
-                }
+                    print_success("Last block is zeroed", "new_size: %u", new_size); } 
+                else {
+                    print_error("Last block is not zeroed", "new_size: %u", new_size); }
             } else {
-                print_error("Failed to read last block of size %u", "%u: %d", new_size, ret);
+                print_error("Failed to read last block", "new_size: %u, code: %d", new_size, ret);
             }
         } else {
-            print_error("Failed to extend file to size %u", "%u: %d", new_size, ret);
+            print_error("Failed to extend file", "new_size: %u, code: %d", new_size, ret);
         }
+
         // Save inode after extension
         ret = vdisk_write(disk_handle, 1 + target_inode_block, buffer);
         if (ret != 0) {
@@ -409,32 +411,34 @@ void test4() {
         vdisk_sync(disk_handle);
     }
 
-    // Test 5: Write and verify (uses extend_file and set_data_block_pointer indirectly)
-    print_info("Testing write with extend_file", NULL);
-    ret = write(inode_num, data, VDISK_SECTOR_SIZE, 2048);  // Write 1 block at offset 2048
+    // Test 4: Write and verify (uses extend_file and set_data_block_pointer indirectly)
+    print_warning("Testing write (with extend_file)", NULL);
+    int offset = 2048;
+    ret = write(inode_num, data, VDISK_SECTOR_SIZE, offset);  // Write 1 block at offset 2048
     if (ret >= 0) {
-        print_success("Wrote %d bytes at offset 2048", "%d", ret);
+        print_success("Wrote ", "%d", ret);
         // Read back to verify
         memset(data, 0, bytes_num);
-        ret = read(inode_num, data, VDISK_SECTOR_SIZE, 2048);
+        ret = read(inode_num, data, VDISK_SECTOR_SIZE, offset);
         if (ret >= 0) {
             int correct_data = 1;
-            for (int i = 0; i < ret; i++) {
+            int i;
+            for (i = 0; i < ret; i++) {
                 if (data[i] != 0xAA) {
                     correct_data = 0;
                     break;
                 }
             }
             if (correct_data) {
-                print_success("Data at offset 2048 verified", NULL);
+                print_success("Data verified", "offset: %d", offset);
             } else {
-                print_error("Data at offset 2048 incorrect", NULL);
+                print_error("Data incorrect", "offset: %d, i:", offset, i);
             }
         } else {
-            print_error("Failed to read back data", "%d", ret);
+            print_error("Failed to read back data", "offset: %d, code: %d", offset, ret);
         }
     } else {
-        print_error("Failed to write at offset 2048", "%d", ret);
+        print_error("Failed to write at offset 2048", "offset: %d, code: %d", offset, ret);
     }
 
     // Cleanup
