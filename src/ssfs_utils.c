@@ -408,7 +408,7 @@ void pretty_print(const char* color, const char *label, const char *format, va_l
  * @param inode_num The inode number of the file.
  * @return 0 on success, negative error code on failure.
  */
-int print_inode_info(int inode_num) {
+int print_inode_num_info(int inode_num) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -429,8 +429,13 @@ int print_inode_info(int inode_num) {
     inodes_block_t *ib = (inodes_block_t *)buffer;
     inode_t *inode = &ib[0][target_inode_num];
 
-    // Print basic inode information
     print_info("Reading inode %d", "%d", inode_num);
+    return print_inode_info(inode);
+}
+
+
+int print_inode_info(inode_t *inode) {
+    int ret = 0;
     printf("  inode->valid: %d\n", inode->valid);
     printf("  inode->size: %d\n", inode->size);
     printf("  inode->direct[0]: %u\n", inode->direct[0]);
@@ -463,7 +468,7 @@ int print_inode_info(int inode_num) {
         for (int i = 0; i < 256; i++) {
             if (inode_block[i] != 0) {
                 printf("    indirect2[%d] = %u\n", i, inode_block[i]);
-                
+
                 uint8_t indirect_buffer[VDISK_SECTOR_SIZE];
                 ret = vdisk_read(disk_handle, inode->indirect1, indirect_buffer);
                 if (ret != 0)
@@ -478,16 +483,9 @@ int print_inode_info(int inode_num) {
         }
     }
     
-
     return 0;
 }
 
-/*
-int print_inode_info(inode *inode) {
-
-}
 
 
 
-
-*/

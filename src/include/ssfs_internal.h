@@ -64,7 +64,6 @@ extern const unsigned char MAGIC_NUMBER[];
 
 // test
 
-
 void test1();
 void test2();
 void test3();
@@ -81,8 +80,6 @@ int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset);
 int extend_file(inode_t *inode, uint32_t new_size);
 int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical);
 int get_free_block(uint32_t *block);
-
-int write_out_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset);
 
 // ssfs_utils 
 
@@ -108,7 +105,8 @@ void print_error(const char *label, const char *format, ...);
 void print_success(const char *label, const char *format, ...);
 void print_warning(const char *label, const char *format, ...);
 
-int print_inode_info(int inode_num);
+int print_inode_num_info(int inode_num);
+int print_inode_info(inode_t *inode);
 
 
 #endif

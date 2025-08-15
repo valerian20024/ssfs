@@ -549,11 +549,6 @@ int extend_file(inode_t *inode, uint32_t new_size) {
     if (new_size <= inode->size) 
         return ret;
 
-    // Find possible allocatable blocks in the bitmap.
-    // Set the blocks in the bitmap as used.
-    // Add to the inode's direct, indirect1, indirect2 addresses the new ones.
-    // Set size of inode to new size.
-
     // Calculate current and needed block counts
     uint32_t current_blocks = (inode->size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
     uint32_t needed_blocks = (new_size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
