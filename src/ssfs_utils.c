@@ -306,9 +306,12 @@ int deallocate_double_indirect_block(uint32_t double_indirect_block) {
  * 
  */
 void print_info(const char *label, const char *format, ...) {
+    char extended_label[256];
+    snprintf(extended_label, sizeof(extended_label), "[INFO] %s", label);
+
     va_list args;
     va_start(args, format);
-    pretty_print(COLOR_BLUE, label, format, args);
+    pretty_print(COLOR_BLUE, extended_label, format, args);
     va_end(args);
 }
 
@@ -326,9 +329,12 @@ void print_info(const char *label, const char *format, ...) {
  * 
  */
 void print_error(const char *label, const char *format, ...) {
+    char extended_label[256];
+    snprintf(extended_label, sizeof(extended_label), "[ERROR] %s", label);
+
     va_list args;
     va_start(args, format);
-    pretty_print(COLOR_RED, label, format, args);
+    pretty_print(COLOR_RED, extended_label, format, args);
     va_end(args);
 }
 
@@ -346,9 +352,12 @@ void print_error(const char *label, const char *format, ...) {
  * 
  */
 void print_success(const char *label, const char *format, ...) {
+    char extended_label[256];
+    snprintf(extended_label, sizeof(extended_label), "[SUCCESS] %s", label);
+
     va_list args;
     va_start(args, format);
-    pretty_print(COLOR_GREEN, label, format, args);
+    pretty_print(COLOR_GREEN, extended_label, format, args);
     va_end(args);
 }
 
@@ -367,9 +376,12 @@ void print_success(const char *label, const char *format, ...) {
  * 
  */
 void print_warning(const char *label, const char *format, ...) {
+    char extended_label[256];
+    snprintf(extended_label, sizeof(extended_label), "[WARNING] %s", label);
+
     va_list args;
     va_start(args, format);
-    pretty_print(COLOR_YELLOW, label, format, args);
+    pretty_print(COLOR_YELLOW, extended_label, format, args);
     va_end(args);
 }
 
@@ -429,7 +441,7 @@ int print_inode_num_info(int inode_num) {
     inodes_block_t *ib = (inodes_block_t *)buffer;
     inode_t *inode = &ib[0][target_inode_num];
 
-    print_info("Reading inode %d", "%d", inode_num);
+    print_info("Reading inode", "inode_num: %d", inode_num);
     return print_inode_info(inode);
 }
 
@@ -450,17 +462,17 @@ int print_inode_info(inode_t *inode) {
         if (ret != 0)
             return ret;
 
-        uint32_t *data_block = (uint32_t *)indirect_buffer;
+        uint32_t *indirect1_data_block = (uint32_t *)indirect_buffer;
         for (int i = 0; i < 256; i++) {
-            if (data_block[i] != 0)
-                printf("    indirect1[%d] = %u\n", i, data_block[i]);
+            if (indirect1_data_block[i] != 0)
+                printf("    indirect1[%d] = %u\n", i, indirect1_data_block[i]);
         }
     }
 
     printf("  inode->indirect2: %u\n", inode->indirect2);
     if (inode->indirect2 != 0) {
         uint8_t indirect2_buffer[VDISK_SECTOR_SIZE];
-        ret = vdisk_read(disk_handle, inode->indirect1, indirect2_buffer);
+        ret = vdisk_read(disk_handle, inode->indirect2, indirect2_buffer);
         if (ret != 0)
             return ret;
 
@@ -470,14 +482,14 @@ int print_inode_info(inode_t *inode) {
                 printf("    indirect2[%d] = %u\n", i, inode_block[i]);
 
                 uint8_t indirect_buffer[VDISK_SECTOR_SIZE];
-                ret = vdisk_read(disk_handle, inode->indirect1, indirect_buffer);
+                ret = vdisk_read(disk_handle, inode_block[i], indirect_buffer);
                 if (ret != 0)
                     return ret;
 
-                uint32_t *data_block = (uint32_t *)indirect_buffer;
+                uint32_t *indirect2_data_block = (uint32_t *)indirect_buffer;
                 for (int j = 0; j < 256; j++) {
-                    if (data_block[j] != 0)
-                        printf("      indirect2[%d][%d] = %u\n", i, j, data_block[i]);
+                    if (indirect2_data_block[j] != 0)
+                        printf("      indirect2[%d][%d] = %u\n", i, j, indirect2_data_block[j]);
                 }
             }
         }

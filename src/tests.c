@@ -309,6 +309,7 @@ void test4() {
     inodes_block_t *ib = (inodes_block_t *)buffer;
     inode_t *target_inode = &ib[0][target_inode_num];
 
+    print_info("Reading again inode", "number: %d", inode_num);
     print_inode_info(target_inode);
 
     // Test 1: get_free_block
@@ -328,7 +329,8 @@ void test4() {
         print_error("Failed to get second free block", "%d", ret);
     }      
 
-    
+    print_info("Reading again inode", "number: %d", inode_num);
+    print_inode_info(target_inode);
 
     // Test 2: set_data_block_pointer (direct, indirect, double-indirect)
     print_warning("Testing set_data_block_pointer", NULL);
@@ -363,10 +365,9 @@ void test4() {
     }
     vdisk_sync(disk_handle);
 
-
+    print_info("Reading again inode", "number: %d", inode_num);
     print_inode_info(target_inode);
 
-    
     // Test 3: extend_file
     print_warning("Testing extend_file", NULL);
     uint32_t new_sizes[] = {1024, 4096, 5120, 266240};  // 1 block, 4 blocks (direct), 5 blocks (indirect), 260 blocks (double-indirect)
@@ -413,6 +414,8 @@ void test4() {
             break;
         }
         vdisk_sync(disk_handle);
+
+        print_inode_info(target_inode);
     }
 
     // Test 4: Write and verify (uses extend_file and set_data_block_pointer indirectly)

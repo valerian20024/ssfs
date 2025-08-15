@@ -297,39 +297,7 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
     }
 
     // From now on, len > 0, offset > 0, size >= 0 
-/*
-    if (size == 0) {
-        // Write from the beginning of empty file.
-        if (offset == size) {
-            ret = write_out_file(target_inode, data, len, offset);
-        }
-        // Write past beginning of empty file, gap is filled with zeroes. 
-        else if (offset > size) {
-            //write_zeros();
-            ret = write_out_file(target_inode, data, len, offset);
-        }
-    } else {
-        // Write strictly inside the file.
-        if (offset + len <= size) {
-            ret = write_in_file(target_inode, data, len, offset);
-        } 
-        // Write both inside and out of the file.
-        else if (offset < size && offset + len > size) {
-            int bytes_in = write_in_file(target_inode, data, size - offset, offset);
-            int bytes_out = write_out_file(target_inode, data, len - (size - offset), size);
-            ret = bytes_in + bytes_out;
-        } 
-        // Write past the end of file.
-        else if (offset == size) {
-            ret = write_out_file(target_inode, data, len, offset);
-        }
-        // Write paste the end of file, gap is filled with zeroes.
-        else if (offset > size) {
-            //write_zeros();
-            ret = write_out_file(target_inode, data, len, offset);
-        }
-    }
-*/
+
     // Extend file if needed to cover offset + len
     uint32_t new_size = size > offset + len ? size : offset + len;
     if (new_size > size) {
@@ -426,12 +394,9 @@ int write_out_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset)
     return 0;
 }
 
-
-
-/*
- * Helper function to allocate and return a free physical block.
- * Returns 0 on success, with *block set to the block number.
- * Returns negative error code on failure.
+/**
+ * @brief Helper function to allocate and return a free physical block. 
+ * @return 0 on success, with *block set to the block number. Returns negative error code on failure.
  */
 int get_free_block(uint32_t *block) {
     if (allocated_blocks_handle == NULL) 
@@ -446,12 +411,12 @@ int get_free_block(uint32_t *block) {
     return ssfs_ENOSPACE;
 }
 
-/*
- * Helper function to set the physical block pointer for a logical block index
+/**
+ * @brief Helper function to set the physical block pointer for a logical block index
  * in the inode.
  * 
  * Allocates indirect/double-indirect blocks if needed.
- * Returns 0 on success, negative error code on failure.
+ * @return Returns 0 on success, negative error code on failure.
  */
 int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical) {
     int ret = 0;
@@ -543,8 +508,6 @@ int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical) 
  * @return 0 on success, negative error code on failure.
  */
 int extend_file(inode_t *inode, uint32_t new_size) {
-    print_inode_info(0);
-
     int ret = 0;
     if (new_size <= inode->size) 
         return ret;
@@ -553,8 +516,8 @@ int extend_file(inode_t *inode, uint32_t new_size) {
     uint32_t current_blocks = (inode->size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
     uint32_t needed_blocks = (new_size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
 
-    printf("  current_blocks: %d\n", current_blocks);
-    printf("  needed_blocks: %d\n", needed_blocks);
+    //printf("  current_blocks: %d\n", current_blocks);
+    //printf("  needed_blocks: %d\n", needed_blocks);
 
     // Allocate new blocks and assign to inode pointers
     for (uint32_t logical = current_blocks; logical < needed_blocks; logical++) {
@@ -563,8 +526,8 @@ int extend_file(inode_t *inode, uint32_t new_size) {
         if (ret != 0)
             goto error_management;
 
-        printf("  logical: %d\n", logical);
-        printf("  physical: %d\n", physical);
+        //printf("  logical: %d\n", logical);
+        //printf("  physical: %d\n", physical);
 
         ret = set_data_block_pointer(inode, logical, physical);
         if (ret != 0)
