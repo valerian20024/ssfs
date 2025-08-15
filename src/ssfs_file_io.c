@@ -543,16 +543,7 @@ int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical) 
  * @return 0 on success, negative error code on failure.
  */
 int extend_file(inode_t *inode, uint32_t new_size) {
-    printf("extend_file\n");
-    printf("inode->valid: %d\n", inode->valid);
-    printf("inode->size: %d\n", inode->size);
-    printf("inode->direct[0]: %d\n", inode->direct[0]);
-    printf("inode->direct[1]: %d\n", inode->direct[1]);
-    printf("inode->direct[2]: %d\n", inode->direct[2]);
-    printf("inode->direct[3]: %d\n", inode->direct[3]);
-    printf("inode->indirect1: %d\n", inode->indirect1);
-    printf("inode->indirect2: %d\n", inode->indirect2);
-    printf("new_size: %d\n", new_size);
+    print_inode_info(0);
 
     int ret = 0;
     if (new_size <= inode->size) 
@@ -567,19 +558,18 @@ int extend_file(inode_t *inode, uint32_t new_size) {
     uint32_t current_blocks = (inode->size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
     uint32_t needed_blocks = (new_size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
 
-    printf("current_blocks: %d\n", current_blocks);
-    printf("needed_blocks: %d\n", needed_blocks);
+    printf("  current_blocks: %d\n", current_blocks);
+    printf("  needed_blocks: %d\n", needed_blocks);
 
     // Allocate new blocks and assign to inode pointers
     for (uint32_t logical = current_blocks; logical < needed_blocks; logical++) {
-        printf("logical: %d\n", logical);
-
         uint32_t physical;
         ret = get_free_block(&physical);
         if (ret != 0)
             goto error_management;
 
-        printf("physical: %d\n", physical);
+        printf("  logical: %d\n", logical);
+        printf("  physical: %d\n", physical);
 
         ret = set_data_block_pointer(inode, logical, physical);
         if (ret != 0)
