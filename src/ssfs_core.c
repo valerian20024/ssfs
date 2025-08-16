@@ -36,6 +36,9 @@ bool* allocated_blocks_handle = NULL;
  * will be erased. The function assumes the disk is not currently mounted.
  */
 int format(char *disk_name, int inodes) {
+    printf("Calling format function!\n=================\n");
+    printf("char *disk_name: %s, int inodes: %d\n", disk_name, inodes);
+
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -114,6 +117,9 @@ error_management:
  * volume is already mounted will result in an error.
  */
 int mount(char *disk_name) {
+    printf("Calling mount function!\n=================\n");
+    printf("char *disk_name: %s\n", disk_name);
+
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -191,6 +197,9 @@ error_management_simple_error:
  * @note This function will fail if no volume is currently mounted.
  */
 int unmount() {
+    printf("Calling unmount function!\n=================\n");
+    printf("no args\n");
+
     int ret = 0;
 
     if (!is_mounted()) {
@@ -199,15 +208,10 @@ int unmount() {
     }
 
     vdisk_off(disk_handle);
-    //printf("vdisk_off(disk_handle)\n");
     free(disk_handle);
-    //printf("free(disk_handle)\n");
     disk_handle = NULL;
-    //printf("disk_handle = NULL;\n");
     free(allocated_blocks_handle);
-    //printf("free(allocated_blocks_handle);\n");
     allocated_blocks_handle = NULL;
-    //printf("allocated_blocks_handle = NULL;\n");
 
     return ret;
 
@@ -219,7 +223,7 @@ error_management:
 /**
  * @brief Initializes the block allocation bitmap based on existing file system usage.
  *
- * This internal procedure scan sthe file system to identify all blocks currently
+ * This internal procedure scans the file system to identify all blocks currently
  * in use (e.g. superblock, inodes, and existing data). It then updates
  * a global bitmap variable to reflect these used blocks.
  *
@@ -231,6 +235,9 @@ error_management:
  */
 
 int _initialize_allocated_blocks() {
+    printf("Calling _initialize_allocated_blocks function!\n------------------------\n");
+    printf("no args\n");
+
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -248,7 +255,7 @@ int _initialize_allocated_blocks() {
     // Foreach inode block in the filesystem
     for (uint32_t block_num = 1; block_num < 1 + sb->num_inode_blocks; block_num++) {
         ret = vdisk_read(disk_handle, block_num, buffer);
-        //! manage error must deallocate the direct blocks!
+        // ! manage error must deallocate the direct blocks!
         inodes_block_t *ib = (inodes_block_t *)buffer;
         
         // For each used inode in an inode block

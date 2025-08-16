@@ -29,17 +29,21 @@
  * @note The error codes are defined in `error.c`.
  */
 int stat(int inode_num) {
+    printf("Calling stat function!\n=================\n");
+    printf("int inode_num: %d\n", inode_num);
+
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
     
-    if (!is_mounted())
-        return ssfs_EMOUNT;
-    
-    ret = vdisk_read(disk_handle, 0, buffer);
-    if (ret != 0) {
-        ret = vdisk_EACCESS;
+    if (!is_mounted()) {
+        ret = ssfs_EMOUNT;
         goto error_management;
     }
+    
+    ret = vdisk_read(disk_handle, 0, buffer);
+    if (ret != 0)
+        goto error_management;
+
     superblock_t *sb = (superblock_t *)buffer;
     
     // Checking validity of the function parameter
@@ -87,6 +91,9 @@ error_management:
  * @note Inode numbers start from zero included.
  */
 int create() {
+    printf("Calling create function!\n=================\n");
+    printf("no args\n");
+
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -110,7 +117,6 @@ int create() {
         if (ret != 0)
             goto error_management;
 
-        // todo check in other parts of the code it's been dereferenced the same way
         inodes_block_t* inodes_block = (inodes_block_t*)buffer;
 
         // Foreach inode
@@ -159,6 +165,9 @@ error_management:
  * on all deleted blocks.
  */
 int delete(int inode_num) {
+    printf("Calling delete function!\n=================\n");
+    printf("int inode_num: %d\n", inode_num);
+
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -199,8 +208,6 @@ int delete(int inode_num) {
         goto error_management;
     }
 
-    // Mark the inode as free
-    // todo test this !!
     target_inode->valid = 0;
     target_inode->size = 0;
     memset(target_inode->direct, 0, sizeof(target_inode->direct));
@@ -215,13 +222,11 @@ int delete(int inode_num) {
         }
     }
 
-    if (target_inode->indirect1) {
+    if (target_inode->indirect1)
         deallocate_indirect_block(target_inode->indirect1);
-    }
 
-    if (target_inode->indirect2) {
+    if (target_inode->indirect2)
         deallocate_double_indirect_block(target_inode->indirect2);
-    }
 
     return ret;
 

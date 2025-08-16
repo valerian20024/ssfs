@@ -62,18 +62,18 @@ extern const unsigned char MAGIC_NUMBER[];
 // # Prototypes declaration #
 // ##########################
 
-// test
+// # test
 
 void test1();
 void test2();
 void test3();
 void test4();
 
-// ssfs_core
+// # ssfs_core
 
 int _initialize_allocated_blocks();
 
-// ssfs_file_io
+// # ssfs_file_io
 
 int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t max_addresses);
 int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset);
@@ -81,7 +81,7 @@ int extend_file(inode_t *inode, uint32_t new_size);
 int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical);
 int get_free_block(uint32_t *block);
 
-// ssfs_utils 
+// # ssfs_utils 
 
 int is_mounted();
 int is_inode_positive(int inodes_num);

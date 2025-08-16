@@ -120,6 +120,9 @@ cleanup:
  * also be used directly.
  */
 int set_block_status(uint32_t block, bool status) {
+    printf("Calling set_block_status function!\n------------------------\n");
+    printf("uint32_t block: %u, bool status %d\n", block, status);
+
     if (allocated_blocks_handle == NULL) 
         return ssfs_EALLOC;
 
