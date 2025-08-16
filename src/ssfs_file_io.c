@@ -42,7 +42,7 @@
  * @note Won't test file reachability if reading 0 bytes.
  */
 int read(int inode_num, uint8_t *data, int _len, int _offset) {
-    printf("Calling read function!n");
+    printf("Calling read function!\n");
     printf("  int inode_num: %d, uint8_t *data: %p, int _len: %d, int _offset: %d\n", inode_num, data, _len, _offset);
 
     int ret = 0;

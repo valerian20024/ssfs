@@ -474,9 +474,11 @@ void test5() {
         print_error("Memory allocation failed", NULL);
         return;
     }
-    memset(data, 0xAA, bytes_num);  // Fill with a pattern for write tests
-    print_info("Allocating resources", "data is %d bytes", bytes_num);
+    for (int i = 0; i < bytes_num; i++) {
+        data[i] = (uint8_t)(i % 16);  // Fill with a pattern
+    }
 
+    print_info("Allocating resources", "data is %d bytes", bytes_num);
 
     print_info("Formatting", "%s", disk_name);
     print_info("Number of inodes", "%d", inodes);
@@ -517,25 +519,41 @@ void test5() {
         ret = write(f, data, len, offset);
         if (ret >= 0) {
             print_success("Wrote ", "%d bytes", ret);
+            
             // Read back to verify
-            memset(data, 0, bytes_num);
-            ret = read(f, data, VDISK_SECTOR_SIZE, offset);
-            if (ret >= 0) {
-                int correct_data = 1;
-                int i;
-                for (i = 0; i < ret; i++) {
-                    if (data[i] != 0xAA) {
-                        correct_data = 0;
-                        break;
-                    }
+            uint8_t *verify = malloc(len);
+            if (verify) {
+                int read_bytes = read(f, verify, len, offset);
+                print_info("Reading data:", NULL);
+                for (int vi = 0; vi < read_bytes; vi++) {
+                    if (vi && vi % 16 == 0)
+                        fprintf(stdout, "\n");
+                    fprintf(stdout, "%02X ", verify[vi]);                    
+
                 }
-                if (correct_data) {
-                    print_success("Data verified", "offset: %d", offset);
+                fprintf(stdout, "\n");
+
+                if (read_bytes == len && memcmp(data, verify, len) == 0) {
+                    print_success("Verification passed", NULL);
                 } else {
-                    print_error("Data incorrect", "offset: %d, i:", offset, i);
+                    print_error("Verification failed", NULL);
                 }
-            } else {
-                print_error("Failed to read back data", "offset: %d, code: %d", offset, ret);
+                memset(verify, 0, len);
+                free(verify);
+            }
+
+            verify = malloc(len + offset);
+            if (verify) {
+                int read_bytes = read(f, verify, len + offset, 0);
+                print_info("Reading file from 0:", NULL);
+                for (int vi = 0; vi < read_bytes; vi++) {
+                    if (vi && vi % 16 == 0)
+                        fprintf(stdout, "\n");
+                    fprintf(stdout, "%02X ", verify[vi]);                    
+                }
+                fprintf(stdout, "\n");
+                memset(verify, 0, len + offset);
+                free(verify);
             }
         } else {
             print_error("Failed to write at offset", "offset: %d, code: %d", offset, ret);

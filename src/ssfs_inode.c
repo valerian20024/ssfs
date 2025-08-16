@@ -29,7 +29,7 @@
  * @note The error codes are defined in `error.c`.
  */
 int stat(int inode_num) {
-    printf("Calling stat function!n");
+    printf("Calling stat function!\n");
     printf("  int inode_num: %d\n", inode_num);
 
     int ret = 0;
@@ -165,7 +165,7 @@ error_management:
  * on all deleted blocks.
  */
 int delete(int inode_num) {
-    printf("Calling delete function!n");
+    printf("Calling delete function!\n");
     printf("  int inode_num: %d\n", inode_num);
 
     int ret = 0;
