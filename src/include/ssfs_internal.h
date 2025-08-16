@@ -79,7 +79,7 @@ int _initialize_allocated_blocks();
 int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t max_addresses);
 int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset);
 int extend_file(inode_t *inode, uint32_t new_size);
-int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical);
+int set_data_block_pointer(inode_t *inode, uint32_t logical);
 int get_free_block(uint32_t *block);
 
 // # ssfs_utils 

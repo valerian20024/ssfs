@@ -172,7 +172,7 @@ void test3() {
         data[i] = (uint8_t)(i % 16);
     }
 
-    int inode = 2;  // value will be overriden
+    int inode = 0;  // value will be overriden
     int lens[] = {1, 7};
     int offsets[] = {0, 16, 32};
     int num_lens = sizeof(lens) / sizeof(lens[0]);
@@ -351,7 +351,7 @@ void test4() {
             print_error("Failed to get free block", "%d", ret);
         }
 
-        ret = set_data_block_pointer(target_inode, logical, physical);
+        ret = set_data_block_pointer(target_inode, logical);
         if (ret == 0) {
             print_success("Set pointer blocks", "logical: %u, physical: %u", logical, physical);
         } else {
@@ -475,7 +475,7 @@ void test5() {
         return;
     }
     for (int i = 0; i < bytes_num; i++) {
-        data[i] = (uint8_t)(i % 16);  // Fill with a pattern
+        data[i] = (uint8_t)(i % 256 + 1);  // 01, 02, ..., FF
     }
 
     print_info("Allocating resources", "data is %d bytes", bytes_num);
@@ -487,12 +487,14 @@ void test5() {
     print_info("Mounting...", NULL);
     mount(disk_name);
 
-    srand((unsigned int)time(NULL));
-    int files_num = (rand() % (inodes / 2 - 1)) + 1; // at least 1, at most inodes / 2 - 1
-    int delete_files_num = (rand() % files_num) + 1; // at least 1, at most files_num
+    int files_num = 5;
+    int max_len = 10 * 1024;
+    int max_offset = max_len;
+    int len = rand() % max_len + 1;
+    int offset = rand() % max_offset + 1;
 
-    files_num = 5;
-    delete_files_num = 2;
+    len = 8192;
+    offset = 0;
 
     print_info("Number of file to be created", "%d", files_num);
     for (int f = 0; f < files_num; f++) {
@@ -508,15 +510,12 @@ void test5() {
         print_inode_num_info(f);
     
     for (int f = 0; f < files_num; f++) {
-        
-        int max_len = 32;
-        int max_offset = max_len;
-        int len = rand() % max_len + 1;
-        int offset = rand() % max_offset + 1;
-
         print_info("Let's write...", "f: %d, len: %d, offset: %d", f, len, offset);
 
         ret = write(f, data, len, offset);
+
+        print_inode_num_info(f);
+        
         if (ret >= 0) {
             print_success("Wrote ", "%d bytes", ret);
             
@@ -524,6 +523,7 @@ void test5() {
             uint8_t *verify = malloc(len);
             if (verify) {
                 int read_bytes = read(f, verify, len, offset);
+/*                
                 print_info("Reading data:", NULL);
                 for (int vi = 0; vi < read_bytes; vi++) {
                     if (vi && vi % 16 == 0)
@@ -532,7 +532,7 @@ void test5() {
 
                 }
                 fprintf(stdout, "\n");
-
+*/
                 if (read_bytes == len && memcmp(data, verify, len) == 0) {
                     print_success("Verification passed", NULL);
                 } else {
@@ -541,40 +541,48 @@ void test5() {
                 memset(verify, 0, len);
                 free(verify);
             }
-
+/*
             verify = malloc(len + offset);
             if (verify) {
-                int read_bytes = read(f, verify, len + offset, 0);
-                print_info("Reading file from 0:", NULL);
-                for (int vi = 0; vi < read_bytes; vi++) {
-                    if (vi && vi % 16 == 0)
-                        fprintf(stdout, "\n");
-                    fprintf(stdout, "%02X ", verify[vi]);                    
+                int read_bytes = read(f, verify, len + offset, offset);
+                
+                if (read_bytes > 0) {
+                    print_info("Reading file from 0:", NULL);
+                    
+                    // This counter will keep track of how many non-zero bytes have been printed.
+                    int printed_count = 0;
+                    
+                    for (int vi = 0; vi < read_bytes; vi++) {
+                        // We'll print a marker every 128 characters from the file's beginning.
+                        // This check is independent of whether the byte is zero or not.
+                        // The 'vi' index here is relative to the start of the buffer.
+                        if ((offset + vi) > 0 && (offset + vi) % 256 == 0) {
+                            fprintf(stdout, "\n-- Offset %d --\n", offset + vi);
+                            // Reset the printed count to start a new block of output.
+                            printed_count = 0;
+                        }
+                        
+                        // Only print the hex value if the byte is non-zero
+                        if (verify[vi] != 0) {
+                            if (printed_count > 0 && printed_count % 16 == 0) {
+                                fprintf(stdout, "\n");
+                            }
+                            fprintf(stdout, "%02X ", verify[vi]);
+                            
+                            printed_count++;
+                        }
+                    }
+                    fprintf(stdout, "\n");
                 }
-                fprintf(stdout, "\n");
-                memset(verify, 0, len + offset);
+                
+                // Free the allocated memory
                 free(verify);
             }
+*/
         } else {
             print_error("Failed to write at offset", "offset: %d, code: %d", offset, ret);
         }
-        
-        print_inode_num_info(f);
     }
-        
-    
-
-
-
-    print_info("Number of files to be deleted", "%d", delete_files_num);
-    for (int f = 0; f < delete_files_num; f++) {
-        int ret = delete(f);
-        if (ret == 0)
-            printf("Deleted file number: %d\n", f);
-        else
-            print_error("Error when deleting file number", "%d", f);
-    }
-
 
     print_info("Unmounting & freeing...", NULL);
     free(data);

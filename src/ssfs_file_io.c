@@ -404,7 +404,7 @@ error_management:
  */
 int get_free_block(uint32_t *block) {
     printf("Calling get_free_block function!\n");
-    printf("  *(uint32_t *block): %u\n", *block);
+    //printf("  *(uint32_t *block): %u\n", *block);
 
     if (allocated_blocks_handle == NULL) 
         return ssfs_EALLOC;
@@ -412,6 +412,7 @@ int get_free_block(uint32_t *block) {
     for (uint32_t b = 0; b < disk_handle->size_in_sectors; b++) {
         if (!allocated_blocks_handle[b]) {
             *block = b;
+            printf("  block: %d\n", b);
             return set_block_status(b, true);  // Mark as allocated
         }
     }
@@ -425,14 +426,18 @@ int get_free_block(uint32_t *block) {
  * Allocates indirect/double-indirect blocks if needed.
  * @return Returns 0 on success, negative error code on failure.
  */
-int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical) {
+int set_data_block_pointer(inode_t *inode, uint32_t logical) {
     printf("Calling set_data_block_pointer function!\n");
-    printf("  inode_t *inode: %p, uint32_t logical: %u, uint32_t physical: %u\n", (void*)inode, logical, physical);
+    printf("  inode_t *inode: %p, uint32_t logical: %u\n", (void*)inode, logical);
 
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
     if (logical < 4) {
+        uint32_t physical;
+        ret = get_free_block(&physical);
+        if (ret != 0)
+            return ssfs_EALLOC;
         inode->direct[logical] = physical;
         return 0;
     }
@@ -446,6 +451,11 @@ int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical) 
                 return ret;
             inode->indirect1 = ind_block;
         }
+
+        uint32_t physical;
+        ret = get_free_block(&physical);
+        if (ret != 0)
+            return ssfs_EALLOC;
 
         ret = vdisk_read(disk_handle, inode->indirect1, buffer);
         if (ret != 0) 
@@ -467,7 +477,8 @@ int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical) 
     if (inode->indirect2 == 0) {
         uint32_t dind_block;
         ret = get_free_block(&dind_block);
-        if (ret != 0) return ret;
+        if (ret != 0) 
+            return ret;
         inode->indirect2 = dind_block;
     }
 
@@ -490,6 +501,11 @@ int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical) 
         if (ret != 0) 
             return ret;
     }
+
+    uint32_t physical;
+        ret = get_free_block(&physical);
+        if (ret != 0)
+            return ssfs_EALLOC;
 
     uint32_t ind_block = dptrs[ind_index];
     ret = vdisk_read(disk_handle, ind_block, buffer);
@@ -529,20 +545,9 @@ int extend_file(inode_t *inode, uint32_t new_size) {
     uint32_t current_blocks = (inode->size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
     uint32_t needed_blocks = (new_size + VDISK_SECTOR_SIZE - 1) / VDISK_SECTOR_SIZE;
 
-    //printf("  current_blocks: %d\n", current_blocks);
-    //printf("  needed_blocks: %d\n", needed_blocks);
-
     // Allocate new blocks and assign to inode pointers
     for (uint32_t logical = current_blocks; logical < needed_blocks; logical++) {
-        uint32_t physical;
-        ret = get_free_block(&physical);
-        if (ret != 0)
-            goto error_management;
-
-        //printf("  logical: %d\n", logical);
-        //printf("  physical: %d\n", physical);
-
-        ret = set_data_block_pointer(inode, logical, physical);
+        ret = set_data_block_pointer(inode, logical);
         if (ret != 0)
             goto error_management;
     }
