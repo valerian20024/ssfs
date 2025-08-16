@@ -94,9 +94,8 @@ $(TARGET): $(OBJS) | check-libs
 # | Other targets |
 # +---------------+
 
-.PHONY: all debug clean build check-libs show
+.PHONY: all debug clean build check-libs show help
 
-# Will recreate directories for object files and print informations.
 debug:
 	@mkdir -p obj/vdisk
 	@echo -e $(COLOR_G)"CC : " 				$(COLOR_END)	$(CC)
@@ -127,7 +126,6 @@ clean:
 	@echo -e "  $(BUILD_DIR)/"
 	@echo -e "  $(TEST_DIR)/"
 
-# Create a submission archive with source files, Makefile, include, and vdisk directories inside a src/ folder
 build:
 	@echo -e $(COLOR_Y)"Creating submission archive src.tar.gz with src/ folder"$(COLOR_END)
 	@rm -rf build
@@ -148,3 +146,13 @@ show:
 		xxd -r -p "$$f" "$$outfile"; \
 		echo -e "Restored $$outfile from $$f"; \
 	done
+
+help:
+	@echo -e $(COLOR_Y)"Available commands: "	$(COLOR_END)
+	@echo -e $(COLOR_G)"all: "			$(COLOR_END) "Will perform the check-libs then compile the program."
+	@echo -e $(COLOR_G)"debug: "		$(COLOR_END) "Will recreate directories for object files and print informations."
+	@echo -e $(COLOR_G)"clean: "		$(COLOR_END) "Cleans all non source code files (doesn't clean output/)."
+	@echo -e $(COLOR_G)"build: "		$(COLOR_END) "Creates a submission archive with source files, Makefile, include, and vdisk directories inside a src/ folder."
+	@echo -e $(COLOR_G)"check-libs: "	$(COLOR_END) "Checks libs dependencies to compile the program."
+	@echo -e $(COLOR_G)"show: "			$(COLOR_END) "For each hex dump file in $(OUTPUT_DIR), will revert it to be readable."
+	@echo -e $(COLOR_G)"help: "			$(COLOR_END) "Shows this message"
