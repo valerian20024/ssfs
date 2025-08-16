@@ -173,8 +173,8 @@ void test3() {
     }
 
     int inode = 2;  // value will be overriden
-    int lens[] = {16};
-    int offsets[] = {0, 1, 8, 16};
+    int lens[] = {1, 7};
+    int offsets[] = {0, 16, 32};
     int num_lens = sizeof(lens) / sizeof(lens[0]);
     int num_offsets = sizeof(offsets) / sizeof(offsets[0]);
 
@@ -216,7 +216,10 @@ void test3() {
                 int read_bytes = read(inode, verify, len, offset);
                 print_info("Reading data:", NULL);
                 for (int vi = 0; vi < read_bytes; vi++) {
-                    fprintf(stdout, "%02X", verify[vi]);
+                    if (vi && vi % 16 == 0)
+                        fprintf(stdout, "\n");
+                    fprintf(stdout, "%02X ", verify[vi]);                    
+
                 }
                 fprintf(stdout, "\n");
 
@@ -233,7 +236,9 @@ void test3() {
                 int read_bytes = read(inode, verify, len + offset, 0);
                 print_info("Reading file from 0:", NULL);
                 for (int vi = 0; vi < read_bytes; vi++) {
-                    fprintf(stdout, "%02X", verify[vi]);
+                    if (vi && vi % 16 == 0)
+                        fprintf(stdout, "\n");
+                    fprintf(stdout, "%02X ", verify[vi]);                    
                 }
                 fprintf(stdout, "\n");
                 memset(verify, 0, len + offset);
