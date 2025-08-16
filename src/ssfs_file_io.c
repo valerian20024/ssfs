@@ -403,7 +403,7 @@ error_management:
  * @return 0 on success, with *block set to the block number. Returns negative error code on failure.
  */
 int get_free_block(uint32_t *block) {
-    printf("Calling get_free_block function!\n");
+    //printf("Calling get_free_block function!\n");
     //printf("  *(uint32_t *block): %u\n", *block);
 
     if (allocated_blocks_handle == NULL) 
@@ -412,7 +412,7 @@ int get_free_block(uint32_t *block) {
     for (uint32_t b = 0; b < disk_handle->size_in_sectors; b++) {
         if (!allocated_blocks_handle[b]) {
             *block = b;
-            printf("  block: %d\n", b);
+            //printf("  block: %d\n", b);
             return set_block_status(b, true);  // Mark as allocated
         }
     }
@@ -427,8 +427,8 @@ int get_free_block(uint32_t *block) {
  * @return Returns 0 on success, negative error code on failure.
  */
 int set_data_block_pointer(inode_t *inode, uint32_t logical) {
-    printf("Calling set_data_block_pointer function!\n");
-    printf("  inode_t *inode: %p, uint32_t logical: %u\n", (void*)inode, logical);
+    //printf("Calling set_data_block_pointer function!\n");
+    //printf("  inode_t *inode: %p, uint32_t logical: %u\n", (void*)inode, logical);
 
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];

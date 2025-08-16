@@ -468,7 +468,7 @@ void test5() {
     
 
     // Allocate a small buffer for reading/writing data
-    int bytes_num = VDISK_SECTOR_SIZE;  // 1024 bytes
+    int bytes_num = 250000;
     uint8_t *data = malloc(bytes_num);
     if (!data) {
         print_error("Memory allocation failed", NULL);
@@ -487,13 +487,13 @@ void test5() {
     print_info("Mounting...", NULL);
     mount(disk_name);
 
-    int files_num = 5;
+    int files_num = 1;
     int max_len = 10 * 1024;
     int max_offset = max_len;
     int len = rand() % max_len + 1;
     int offset = rand() % max_offset + 1;
 
-    len = 8192;
+    len = bytes_num;
     offset = 0;
 
     print_info("Number of file to be created", "%d", files_num);
@@ -504,11 +504,11 @@ void test5() {
         else
             print_error("Error when creating file: ", "%d", file);
     }
-
+/*
     print_info("Get some stats", NULL);
     for (int f = 0; f < files_num; f++)
         print_inode_num_info(f);
-    
+*/
     for (int f = 0; f < files_num; f++) {
         print_info("Let's write...", "f: %d, len: %d, offset: %d", f, len, offset);
 
