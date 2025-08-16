@@ -42,8 +42,8 @@
  * @note Won't test file reachability if reading 0 bytes.
  */
 int read(int inode_num, uint8_t *data, int _len, int _offset) {
-    printf("Calling read function!\n=================\n");
-    printf("int inode_num: %d, uint8_t *data: %p, int _len: %d, int _offset: %d\n", inode_num, data, _len, _offset);
+    printf("Calling read function!n");
+    printf("  int inode_num: %d, uint8_t *data: %p, int _len: %d, int _offset: %d\n", inode_num, data, _len, _offset);
 
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -162,8 +162,8 @@ error_management:
  * function will deal with the error codes.
  */
 int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t max_addresses) {
-    printf("Calling get_file_block_addresses function!\n------------------------\n");
-    printf("inode_t *inode: %p, uint32_t *address_buffer: %p, uint32_t max_addresses: %u\n", (void*)inode, (void*)address_buffer, max_addresses);
+    printf("Calling get_file_block_addresses function!\n");
+    printf("  inode_t *inode: %p, uint32_t *address_buffer: %p, uint32_t max_addresses: %u\n", (void*)inode, (void*)address_buffer, max_addresses);
 
 
     int ret = 0;
@@ -245,8 +245,8 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t 
  *
  */
 int write(int inode_num, uint8_t *data, int _len, int _offset) {
-    printf("Calling write function!\n=================\n");
-    printf("int inode_num: %d, uint8_t *data: %p, int _len: %d, int _offset: %d\n", inode_num, data, _len, _offset);
+    printf("Calling write function!\n");
+    printf("  int inode_num: %d, uint8_t *data: %p, int _len: %d, int _offset: %d\n", inode_num, data, _len, _offset);
 
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -341,8 +341,8 @@ error_management:
  * @return Number of bytes actually written to the file on success; error codes on failure.
  */
 int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) {
-    printf("Calling write_in_file function!\n------------------------\n");
-    printf("inode_t *inode: %p, uint8_t *data: %p, uint32_t len: %u, uint32_t offset: %u\n", (void*)inode, (void*)data, len, offset);
+    printf("Calling write_in_file function!\n");
+    printf("  inode_t *inode: %p, uint8_t *data: %p, uint32_t len: %u, uint32_t offset: %u\n", (void*)inode, (void*)data, len, offset);
 
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -403,8 +403,8 @@ error_management:
  * @return 0 on success, with *block set to the block number. Returns negative error code on failure.
  */
 int get_free_block(uint32_t *block) {
-    printf("Calling get_free_block function!\n------------------------\n");
-    printf("*(uint32_t *block): %u\n", *block);
+    printf("Calling get_free_block function!\n");
+    printf("  *(uint32_t *block): %u\n", *block);
 
     if (allocated_blocks_handle == NULL) 
         return ssfs_EALLOC;
@@ -426,8 +426,8 @@ int get_free_block(uint32_t *block) {
  * @return Returns 0 on success, negative error code on failure.
  */
 int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical) {
-    printf("Calling set_data_block_pointer function!\n------------------------\n");
-    printf("inode_t *inode: %p, uint32_t logical: %u, uint32_t physical: %u\n", (void*)inode, logical, physical);
+    printf("Calling set_data_block_pointer function!\n");
+    printf("  inode_t *inode: %p, uint32_t logical: %u, uint32_t physical: %u\n", (void*)inode, logical, physical);
 
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -518,8 +518,8 @@ int set_data_block_pointer(inode_t *inode, uint32_t logical, uint32_t physical) 
  * @return 0 on success, negative error code on failure.
  */
 int extend_file(inode_t *inode, uint32_t new_size) {
-    printf("Calling extend_file function!\n------------------------\n");
-    printf("inode_t *inode: %p, uint32_t new_size: %u\n", (void*)inode, new_size);
+    printf("Calling extend_file function!\n");
+    printf("  inode_t *inode: %p, uint32_t new_size: %u\n", (void*)inode, new_size);
 
     int ret = 0;
     if (new_size <= inode->size) 

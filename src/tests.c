@@ -449,12 +449,116 @@ void test4() {
             print_error("Failed to read back data", "offset: %d, code: %d", offset, ret);
         }
     } else {
-        print_error("Failed to write at offset 2048", "offset: %d, code: %d", offset, ret);
+        print_error("Failed to write at offset", "offset: %d, code: %d", offset, ret);
     }
 
     // Cleanup
-    print_info("Unmounting...", NULL);
+    print_info("Unmounting & freeing...", NULL);
     free(data);
     unmount();
 }
 
+// One test to rule them all
+void test5() {
+    print_warning("Starting test5...", NULL);
+    
+    int ret = 0;
+    char *disk_name = "disk_img.5";
+    int inodes = 128;
+    
+
+    // Allocate a small buffer for reading/writing data
+    int bytes_num = VDISK_SECTOR_SIZE;  // 1024 bytes
+    uint8_t *data = malloc(bytes_num);
+    if (!data) {
+        print_error("Memory allocation failed", NULL);
+        return;
+    }
+    memset(data, 0xAA, bytes_num);  // Fill with a pattern for write tests
+    print_info("Allocating resources", "data is %d bytes", bytes_num);
+
+
+    print_info("Formatting", "%s", disk_name);
+    print_info("Number of inodes", "%d", inodes);
+    format(disk_name, inodes);
+
+    print_info("Mounting...", NULL);
+    mount(disk_name);
+
+    srand((unsigned int)time(NULL));
+    int files_num = (rand() % (inodes / 2 - 1)) + 1; // at least 1, at most inodes / 2 - 1
+    int delete_files_num = (rand() % files_num) + 1; // at least 1, at most files_num
+
+    files_num = 5;
+    delete_files_num = 2;
+
+    print_info("Number of file to be created", "%d", files_num);
+    for (int f = 0; f < files_num; f++) {
+        int file = create();
+        if (file >= 0)
+            printf("Created file with inode %d\n", file);
+        else
+            print_error("Error when creating file: ", "%d", file);
+    }
+
+    print_info("Get some stats", NULL);
+    for (int f = 0; f < files_num; f++)
+        print_inode_num_info(f);
+    
+    for (int f = 0; f < files_num; f++) {
+        
+        int max_len = 32;
+        int max_offset = max_len;
+        int len = rand() % max_len + 1;
+        int offset = rand() % max_offset + 1;
+
+        print_info("Let's write...", "f: %d, len: %d, offset: %d", f, len, offset);
+
+        ret = write(f, data, len, offset);
+        if (ret >= 0) {
+            print_success("Wrote ", "%d bytes", ret);
+            // Read back to verify
+            memset(data, 0, bytes_num);
+            ret = read(f, data, VDISK_SECTOR_SIZE, offset);
+            if (ret >= 0) {
+                int correct_data = 1;
+                int i;
+                for (i = 0; i < ret; i++) {
+                    if (data[i] != 0xAA) {
+                        correct_data = 0;
+                        break;
+                    }
+                }
+                if (correct_data) {
+                    print_success("Data verified", "offset: %d", offset);
+                } else {
+                    print_error("Data incorrect", "offset: %d, i:", offset, i);
+                }
+            } else {
+                print_error("Failed to read back data", "offset: %d, code: %d", offset, ret);
+            }
+        } else {
+            print_error("Failed to write at offset", "offset: %d, code: %d", offset, ret);
+        }
+        
+        print_inode_num_info(f);
+    }
+        
+    
+
+
+
+    print_info("Number of files to be deleted", "%d", delete_files_num);
+    for (int f = 0; f < delete_files_num; f++) {
+        int ret = delete(f);
+        if (ret == 0)
+            printf("Deleted file number: %d\n", f);
+        else
+            print_error("Error when deleting file number", "%d", f);
+    }
+
+
+    print_info("Unmounting & freeing...", NULL);
+    free(data);
+    unmount();
+}

@@ -36,8 +36,8 @@ bool* allocated_blocks_handle = NULL;
  * will be erased. The function assumes the disk is not currently mounted.
  */
 int format(char *disk_name, int inodes) {
-    printf("Calling format function!\n=================\n");
-    printf("char *disk_name: %s, int inodes: %d\n", disk_name, inodes);
+    printf("Calling format function!n");
+    printf("  char *disk_name: %s, int inodes: %d\n", disk_name, inodes);
 
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -117,8 +117,8 @@ error_management:
  * volume is already mounted will result in an error.
  */
 int mount(char *disk_name) {
-    printf("Calling mount function!\n=================\n");
-    printf("char *disk_name: %s\n", disk_name);
+    printf("Calling mount function!n");
+    printf("  char *disk_name: %s\n", disk_name);
 
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -197,8 +197,8 @@ error_management_simple_error:
  * @note This function will fail if no volume is currently mounted.
  */
 int unmount() {
-    printf("Calling unmount function!\n=================\n");
-    printf("no args\n");
+    printf("Calling unmount function!n");
+    printf("  no args\n");
 
     int ret = 0;
 
@@ -235,8 +235,8 @@ error_management:
  */
 
 int _initialize_allocated_blocks() {
-    printf("Calling _initialize_allocated_blocks function!\n------------------------\n");
-    printf("no args\n");
+    printf("Calling _initialize_allocated_blocks function!\n");
+    printf("  no args\n");
 
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
