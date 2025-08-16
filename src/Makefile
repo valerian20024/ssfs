@@ -5,7 +5,7 @@
 # C Compiler.
 CC := gcc
 
-# Install libbsd-dev prior to compiling
+# Install libbsd-dev (or libbsd) prior to compiling
 FLAGS := -Wall -pedantic -std=c99 -Wextra -D_POSIX_SOURCE -lbsd -g -gdwarf-4
 
 # Final executable name.
@@ -99,14 +99,20 @@ $(TARGET): $(OBJS) | check-libs
 # Will recreate directories for object files and print informations.
 debug:
 	@mkdir -p obj/vdisk
-	@echo -e $(COLOR_G)"SRC_DIR : "	$(COLOR_END)	$(SRCS_DIR)
-	@echo -e $(COLOR_G)"SRCS : "		$(COLOR_END)	$(SRCS)
-	@echo -e $(COLOR_G)"OBJS_DIR : "	$(COLOR_END)	$(OBJS_DIR)
-	@echo -e $(COLOR_G)"OBJS : "		$(COLOR_END)	$(OBJS)
-	@echo -e $(COLOR_Y)"Compiled using :" $(COLOR_END)
-	@echo -e $(CC) $(FLAGS) -I$(INCLUDE_DIR) -c -o
-	@echo -e $(COLOR_Y)"Linked using :" $(COLOR_END)
-	@echo -e $(CC) $(OBJS) -o
+	@echo -e $(COLOR_G)"CC : " 				$(COLOR_END)	$(CC)
+	@echo -e $(COLOR_G)"TARGET : "			$(COLOR_END)	$(TARGET)
+	@echo -e $(COLOR_G)"ARCHIVE : "			$(COLOR_END)	$(ARCHIVE)
+	@echo -e $(COLOR_G)"INCLUDE_DIR : "		$(COLOR_END)	$(INCLUDE_DIR)
+	@echo -e $(COLOR_G)"SRC_DIR : "			$(COLOR_END)	$(SRCS_DIR)
+	@echo -e $(COLOR_G)"SRCS : "			$(COLOR_END)	$(SRCS)
+	@echo -e $(COLOR_G)"OBJS_DIR : "		$(COLOR_END)	$(OBJS_DIR)
+	@echo -e $(COLOR_G)"OBJS : "			$(COLOR_END)	$(OBJS)
+	@echo -e $(COLOR_G)"BUILD_DIR : "		$(COLOR_END)	$(BUILD_DIR)
+	@echo -e $(COLOR_G)"OUTPUT_DIR : "		$(COLOR_END)	$(OUTPUT_DIR)
+	@echo -e $(COLOR_Y)"Compiled using :" 	$(COLOR_END)
+	@echo -e $(CC) $(FLAGS) -I$(INCLUDE_DIR) "-c -o"
+	@echo -e $(COLOR_Y)"Linked using :" 	$(COLOR_END)
+	@echo -e $(CC) $(OBJS) "-o -lbsd"
 
 clean:
 	@rm -f $(TARGET)
@@ -135,8 +141,8 @@ build:
 	@echo -e $(COLOR_G)"Submission archive src.tar.gz created successfully"$(COLOR_END)
 
 show:
-	@echo -e $(COLOR_Y)"Restoring raw files from hex dumps in $(OUTPUT_DIR)"$(COLOR_END)
-	for f in $(OUTPUT_DIR)/*.hex; do \
+	@echo -e $(COLOR_Y)"Restoring raw files from hex dumps in $(OUTPUT_DIR)/"$(COLOR_END)
+	@for f in $(OUTPUT_DIR)/*.hex; do \
 		[ -e "$$f" ] || continue; \
 		outfile=$${f%.hex}.raw; \
 		xxd -r -p "$$f" "$$outfile"; \
