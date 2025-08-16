@@ -296,6 +296,7 @@ int write(int inode_num, uint8_t *data, int _len, int _offset) {
     // Checking inode usage
     uint32_t valid = target_inode->valid;
     uint32_t size = target_inode->size;
+
     if (!valid) {
         ret = ssfs_EINODE;
         goto error_management;

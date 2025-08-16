@@ -255,7 +255,8 @@ int _initialize_allocated_blocks() {
     // Foreach inode block in the filesystem
     for (uint32_t block_num = 1; block_num < 1 + sb->num_inode_blocks; block_num++) {
         ret = vdisk_read(disk_handle, block_num, buffer);
-        // ! manage error must deallocate the direct blocks!
+        if (ret != 0)
+            return ret;
         inodes_block_t *ib = (inodes_block_t *)buffer;
         
         // For each used inode in an inode block

@@ -468,7 +468,7 @@ void test5() {
     
 
     // Allocate a small buffer for reading/writing data
-    int bytes_num = 250000;
+    int bytes_num = 550000;
     uint8_t *data = malloc(bytes_num);
     if (!data) {
         print_error("Memory allocation failed", NULL);
@@ -504,11 +504,11 @@ void test5() {
         else
             print_error("Error when creating file: ", "%d", file);
     }
-/*
+
     print_info("Get some stats", NULL);
     for (int f = 0; f < files_num; f++)
         print_inode_num_info(f);
-*/
+
     for (int f = 0; f < files_num; f++) {
         print_info("Let's write...", "f: %d, len: %d, offset: %d", f, len, offset);
 
