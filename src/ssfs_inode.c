@@ -29,9 +29,6 @@
  * @note The error codes are defined in `error.c`.
  */
 int stat(int inode_num) {
-    printf("Calling stat function!\n");
-    printf("  int inode_num: %d\n", inode_num);
-
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
     
@@ -91,9 +88,6 @@ error_management:
  * @note Inode numbers start from zero included.
  */
 int create() {
-    printf("Calling create function!\n");
-    printf("  no args\n");
-
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -166,9 +160,6 @@ error_management:
  * on all deleted blocks.
  */
 int delete(int inode_num) {
-    printf("Calling delete function!\n");
-    printf("  int inode_num: %d\n", inode_num);
-
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 

@@ -156,6 +156,7 @@ void test2() {
     unmount();
 }
 
+// Read and write to file
 void test3() {
     print_warning("Starting test3...", NULL);
 
@@ -252,10 +253,7 @@ void test3() {
     unmount();
 }
 
-/**
- * @brief Tests helper functions: get_free_block, set_data_block_pointer,
- *        get_data_block_pointer, and extend_file.
- */
+// Tests writing helper functions: get_free_block, set_data_block_pointer, get_data_block_pointer, and extend_file
 void test4() {
     print_warning("Starting test4...", NULL);
 
@@ -523,7 +521,7 @@ void test5() {
             uint8_t *verify = malloc(len);
             if (verify) {
                 int read_bytes = read(f, verify, len, offset);
-/*                
+                
                 print_info("Reading data:", NULL);
                 for (int vi = 0; vi < read_bytes; vi++) {
                     if (vi && vi % 16 == 0)
@@ -532,7 +530,7 @@ void test5() {
 
                 }
                 fprintf(stdout, "\n");
-*/
+
                 if (read_bytes == len && memcmp(data, verify, len) == 0) {
                     print_success("Verification passed", NULL);
                 } else {
@@ -541,7 +539,7 @@ void test5() {
                 memset(verify, 0, len);
                 free(verify);
             }
-/*
+
             verify = malloc(len + offset);
             if (verify) {
                 int read_bytes = read(f, verify, len + offset, offset);
@@ -578,7 +576,7 @@ void test5() {
                 // Free the allocated memory
                 free(verify);
             }
-*/
+
         } else {
             print_error("Failed to write at offset", "offset: %d, code: %d", offset, ret);
         }

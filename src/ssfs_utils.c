@@ -73,6 +73,7 @@ int is_inode_valid(int inode_num, int max_inode_num) {
 
 /**
  * @brief Compares a given number to the magic number of the filesystem.
+ * 
  * @return 0 if the magic numbers don't correspond. 
  * @return 1 if they correspond.
  * 
@@ -82,7 +83,14 @@ int is_magic_ok(uint8_t *number) {
     return ret == 0 ? 1 : 0;
 }
 
-//! wtf is this ????
+/**
+ * @brief Erases (zeroes-out) all content of a given block.
+ *
+ * @param block_num the address of the block to be erased.
+ * 
+ * @return 0 on success. Negative integers (error codes) on failure.
+ *
+ */
 int erase_block_content(uint32_t block_num) {
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -114,15 +122,12 @@ cleanup:
  * @param status A boolean value indicating the new status: `true` for allocated, `false` to mark it as free.
  *
  * @return 0 on success.
- * @return Negative integers (erros codes) on failue.
+ * @return Negative integers (erros codes) on failure.
  *
  * @note It is typically used by higher-level routines such as `allocate_block` but can
  * also be used directly.
  */
 int set_block_status(uint32_t block, bool status) {
-    //printf("Calling set_block_status function!\n");
-    //printf("  uint32_t block: %u, bool status %d\n", block, status);
-
     if (allocated_blocks_handle == NULL) 
         return ssfs_EALLOC;
 
@@ -410,7 +415,7 @@ void pretty_print(const char* color, const char *label, const char *format, va_l
 
 
 /**
- * @brief Prints detailed information about a file given its inode number.
+ * @brief Prints detailed information about a file.
  *
  * Prints the inode's metadata (valid, size, direct blocks, indirect pointers)
  * and lists all non-zero physical block numbers referenced by indirect1 and
@@ -446,6 +451,17 @@ int print_inode_num_info(int inode_num) {
 }
 
 
+/**
+ * @brief Prints detailed information about a file.
+ *
+ * Prints the inode's metadata (valid, size, direct blocks, indirect pointers)
+ * and lists all non-zero physical block numbers referenced by indirect1 and
+ * indirect2 blocks.
+ * @note This function is for developement purpose, it assumes the given input 
+ * are correct, hence it will not perform many tests on them.
+ * @param inode A pointer to the inode.
+ * @return 0 on success, negative error code on failure.
+ */
 int print_inode_info(inode_t *inode) {
     int ret = 0;
     printf("  inode->valid: %d\n", inode->valid);

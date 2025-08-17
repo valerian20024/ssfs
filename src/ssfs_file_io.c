@@ -17,8 +17,6 @@
 #include "error.h"
 
 /**
- */
-/**
  * @brief Reads a specified number of bytes from a file at a given offset.
  *
  * This function reads `len` bytes from the file identified by `inode_num`,
@@ -42,9 +40,6 @@
  * @note Won't test file reachability if reading 0 bytes.
  */
 int read(int inode_num, uint8_t *data, int _len, int _offset) {
-    printf("Calling read function!\n");
-    printf("  int inode_num: %d, uint8_t *data: %p, int _len: %d, int _offset: %d\n", inode_num, data, _len, _offset);
-
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -117,8 +112,6 @@ int read(int inode_num, uint8_t *data, int _len, int _offset) {
     if (ret != 0)
         goto error_management_free;
 
-    // todo extract to a function read_loop(uint32_t *data_block_addresses);
-    // todo returns negative integers on error, so test ret = read_loop and goto error_management_free
     // Read data blocks
     uint32_t bytes_read = 0;
     while (bytes_read < len) {
@@ -162,10 +155,6 @@ error_management:
  * function will deal with the error codes.
  */
 int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t max_addresses) {
-    printf("Calling get_file_block_addresses function!\n");
-    printf("  inode_t *inode: %p, uint32_t *address_buffer: %p, uint32_t max_addresses: %u\n", (void*)inode, (void*)address_buffer, max_addresses);
-
-
     int ret = 0;
     uint32_t addresses_collected = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
@@ -245,9 +234,6 @@ int get_file_block_addresses(inode_t *inode, uint32_t *address_buffer, uint32_t 
  *
  */
 int write(int inode_num, uint8_t *data, int _len, int _offset) {
-    printf("Calling write function!\n");
-    printf("  int inode_num: %d, uint8_t *data: %p, int _len: %d, int _offset: %d\n", inode_num, data, _len, _offset);
-
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -342,9 +328,6 @@ error_management:
  * @return Number of bytes actually written to the file on success; error codes on failure.
  */
 int write_in_file(inode_t *inode, uint8_t *data, uint32_t len, uint32_t offset) {
-    printf("Calling write_in_file function!\n");
-    printf("  inode_t *inode: %p, uint8_t *data: %p, uint32_t len: %u, uint32_t offset: %u\n", (void*)inode, (void*)data, len, offset);
-
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
  
@@ -404,16 +387,12 @@ error_management:
  * @return 0 on success, with *block set to the block number. Returns negative error code on failure.
  */
 int get_free_block(uint32_t *block) {
-    //printf("Calling get_free_block function!\n");
-    //printf("  *(uint32_t *block): %u\n", *block);
-
     if (allocated_blocks_handle == NULL) 
         return ssfs_EALLOC;
 
     for (uint32_t b = 0; b < disk_handle->size_in_sectors; b++) {
         if (!allocated_blocks_handle[b]) {
             *block = b;
-            //printf("  block: %d\n", b);
             return set_block_status(b, true);  // Mark as allocated
         }
     }
@@ -428,9 +407,6 @@ int get_free_block(uint32_t *block) {
  * @return Returns 0 on success, negative error code on failure.
  */
 int set_data_block_pointer(inode_t *inode, uint32_t logical) {
-    //printf("Calling set_data_block_pointer function!\n");
-    //printf("  inode_t *inode: %p, uint32_t logical: %u\n", (void*)inode, logical);
-
     int ret = 0;
     uint8_t buffer[VDISK_SECTOR_SIZE];
 
@@ -535,9 +511,6 @@ int set_data_block_pointer(inode_t *inode, uint32_t logical) {
  * @return 0 on success, negative error code on failure.
  */
 int extend_file(inode_t *inode, uint32_t new_size) {
-    printf("Calling extend_file function!\n");
-    printf("  inode_t *inode: %p, uint32_t new_size: %u\n", (void*)inode, new_size);
-
     int ret = 0;
     if (new_size <= inode->size) 
         return ret;
