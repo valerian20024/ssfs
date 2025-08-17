@@ -1,4 +1,6 @@
 /*
+ * Author: Valérian Wislez
+ *
  * ssfs_inode.c
  * ============
  * 

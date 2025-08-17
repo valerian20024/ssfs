@@ -1,3 +1,7 @@
+#
+# Author: Valérian Wislez
+#
+
 # +--------------------+
 # | Makefile Variables |
 # +--------------------+

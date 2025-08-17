@@ -1,4 +1,6 @@
 /*
+ * Author: Valérian Wislez
+ *
  * ssfs_utils.c
  * ============
  * 
@@ -255,10 +257,8 @@ int _update_double_indirect_block_status(uint32_t double_indirect_block, bool st
 
     uint32_t *indirect_ptrs = (uint32_t *)buffer;
     for (int ip = 0; ip < 256; ip++) {
-        if (indirect_ptrs[ip] == 0)  // todo change this
-            continue;
-
-        _update_indirect_block_status(indirect_ptrs[ip], status);
+        if (indirect_ptrs[ip] != 0)
+            _update_indirect_block_status(indirect_ptrs[ip], status);
     }
 
     set_block_status(double_indirect_block, status);

@@ -1,4 +1,6 @@
 /*
+ * Author: Valérian Wislez
+ *
  * tests.c
  * =======
  * 
